@@ -33,11 +33,34 @@ AsyncSessionLocal = async_sessionmaker(
 )
 
 
+from sqlalchemy import select, update, delete, func, and_, or_, desc, text
+
 async def init_db():
-    """Create all tables"""
+    """Create all tables and auto-migrate schema"""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    logger.info("Database tables created/verified")
+        
+        # PostgreSQL uchun yangi ustunlarni avtomatik qo'shish (Auto-migration)
+        if not settings.DATABASE_URL.startswith("sqlite"):
+            # users jadvali migratsiyasi
+            await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS tangas INTEGER DEFAULT 50"))
+            await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS streak_days INTEGER DEFAULT 0"))
+            await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_video_date DATE"))
+            await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS is_premium BOOLEAN DEFAULT FALSE"))
+            await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS premium_until TIMESTAMP"))
+            await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS referral_code VARCHAR(12)"))
+            await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS referred_by BIGINT"))
+            
+            # payments jadvali migratsiyasi
+            await conn.execute(text("ALTER TABLE payments ADD COLUMN IF NOT EXISTS amount_tangas INTEGER DEFAULT 0"))
+            await conn.execute(text("ALTER TABLE payments ADD COLUMN IF NOT EXISTS package VARCHAR"))
+            await conn.execute(text("ALTER TABLE payments ADD COLUMN IF NOT EXISTS provider_tx_id VARCHAR"))
+            
+            # Eski foydalanuvchilarga referral_code o'rnatish
+            await conn.execute(text("UPDATE users SET referral_code = substr(md5(random()::text), 1, 8) WHERE referral_code IS NULL"))
+            
+    logger.info("Database tables created/verified and auto-migrated successfully.")
+
 
 
 def generate_referral_code(length: int = 8) -> str:
