@@ -301,8 +301,8 @@
 
     <script>
         // API Base configuration
-        // Vercel yordamida /api re-write qilingan deb faraz qilamiz
-        const API_BASE = "";
+        // To'g'ridan-to'g'ri Railway orqali ma'lumotlarni olamiz
+        const API_BASE = "https://videoai-production-736c.up.railway.app";
 
         // Tab Switching Logic
         const tabTitles = {
@@ -335,20 +335,37 @@
             else if(tabId === 'top-users') loadTopUsers();
         }
 
-        // Setup common fetch with credentials if needed
         async function fetchAPI(endpoint, options = {}) {
             try {
-                // Since this might be protected by Basic Auth through Vercel or FastAPI directly, 
-                // we rely on browser session or proxy. 
+                // To send Basic Auth credentials if needed
+                options.credentials = 'include';
+                
                 const res = await fetch(API_BASE + endpoint, options);
                 if(res.status === 401) {
-                    alert("Avtorizatsiya muvaffaqiyatsiz. Iltimos, qayta kiring.");
-                    window.location.reload();
+                    alert("Avtorizatsiya muvaffaqiyatsiz (401). Bot/Railway admin parolingizni kiriting.");
+                    // Prompt for Basic Auth manually if proxy fails to prompt
+                    const user = prompt("Admin username:");
+                    const pass = prompt("Admin password:");
+                    if(user && pass) {
+                        options.headers = {
+                            ...options.headers,
+                            'Authorization': 'Basic ' + btoa(user + ':' + pass)
+                        };
+                        return await fetchAPI(endpoint, options);
+                    }
                     return null;
                 }
+                
+                if(!res.ok) {
+                    const text = await res.text();
+                    document.getElementById('page-subtitle').innerHTML = `<span class="text-red-500 font-bold">API Xatosi (${res.status}): ${endpoint} -> ${text.substring(0, 50)}</span>`;
+                    return null;
+                }
+                
                 const data = await res.json();
                 return data;
             } catch(e) {
+                document.getElementById('page-subtitle').innerHTML = `<span class="text-red-500 font-bold">Tarmoq xatosi: ${endpoint} -> ${e.message}</span>`;
                 console.error("API xatosi:", e);
                 return null;
             }
