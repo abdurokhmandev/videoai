@@ -39,10 +39,9 @@ async def start_handler(message: Message, command: CommandObject):
                     await give_referral_bonus(session, ref_record.id)
                     try:
                         # Taklif qilgan do'stini xabardor qilish
-                        friend_name = user.full_name or "Yangi do'st"
                         ref_text = (
                             "🎁 <b>Do'stingiz qo'shildi!</b>\n\n"
-                            f"{friend_name} taklif havolangiz orqali kirdi.\n"
+                            f"{user.full_name or 'Yangi do\'st'} taklif havolangiz orqali kirdi.\n"
                             "Ikkalangizga ham <b>+20 🪙 bonus tanga</b> taqdim etildi!"
                         )
                         await message.bot.send_message(chat_id=referrer.id, text=ref_text)
