@@ -2,7 +2,7 @@ from aiogram import Router, F
 from aiogram.filters import Command
 from aiogram.types import Message, CallbackQuery
 
-from bot.database.queries import get_or_create_user, AsyncSessionLocal
+from bot.database.queries import get_or_create_user, get_referral_stats, AsyncSessionLocal
 from bot.utils.messages import get_msg
 from bot.keyboards.main import referral_keyboard, back_button
 from bot.config import settings
@@ -10,17 +10,20 @@ from bot.config import settings
 router = Router()
 
 
-async def get_referral_response(user, bot_username: str):
+async def get_referral_response(session, user, bot_username: str):
     # Referral ma'lumotlarini tayyorlash
     bonus_val = settings.REFERRAL_BONUS_SOM
-    saved_val = user.total_referred * bonus_val
+    stats = await get_referral_stats(session, user.id)
+    total_referred = stats["total_referred"]
+    bonuses_given = stats["bonuses_given"]
+    saved_val = total_referred * bonus_val
     
     text = get_msg(user.language, "referral_info").format(
         bot_username=bot_username,
         ref_code=user.referral_code,
         bonus=bonus_val,
-        total_referred=user.total_referred,
-        bonuses=user.total_referred,
+        total_referred=total_referred,
+        bonuses=bonuses_given,
         saved=saved_val
     )
     
@@ -43,7 +46,7 @@ async def referral_message_handler(message: Message):
         )
         
         bot_info = await message.bot.get_me()
-        text, keyboard = await get_referral_response(user, bot_info.username)
+        text, keyboard = await get_referral_response(session, user, bot_info.username)
         await message.answer(text, reply_markup=keyboard)
 
 
@@ -58,6 +61,6 @@ async def referral_callback_handler(callback: CallbackQuery):
         )
         
         bot_info = await callback.bot.get_me()
-        text, keyboard = await get_referral_response(user, bot_info.username)
+        text, keyboard = await get_referral_response(session, user, bot_info.username)
         await callback.message.edit_text(text, reply_markup=keyboard)
         await callback.answer()
