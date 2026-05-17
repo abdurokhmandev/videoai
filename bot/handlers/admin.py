@@ -1,4 +1,5 @@
 from aiogram import Router, F
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.filters import Command
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
@@ -71,7 +72,11 @@ async def admin_stats_callback(callback: CallbackQuery):
             revenue_today=rev_today
         )
         
-        await callback.message.edit_text(text, reply_markup=admin_keyboard())
+        try:
+            await callback.message.edit_text(text, reply_markup=admin_keyboard())
+        except TelegramBadRequest as e:
+            if "message is not modified" not in str(e):
+                raise
         await callback.answer()
 
 
