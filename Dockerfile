@@ -20,4 +20,4 @@ RUN mkdir -p logs
 
 EXPOSE 8000
 
-CMD ["python", "-m", "bot.main"]
+CMD ["uvicorn", "admin.main:app", "--host", "0.0.0.0", "--port", "8000"]

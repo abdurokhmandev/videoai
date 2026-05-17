@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="uz" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VideoAI Bot Admin Panel</title>
+    <!-- Google Fonts Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            purple: '#8B5CF6',
+                            blue: '#3B82F6',
+                            dark: '#0B0F19',
+                            card: '#1F2937',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #05070C;
+            background-image: 
+                radial-gradient(at 10% 20%, rgba(139, 92, 246, 0.15) 0px, transparent 50%),
+                radial-gradient(at 90% 80%, rgba(59, 130, 246, 0.15) 0px, transparent 50%);
+            background-attachment: fixed;
+        }
+        .glass-card {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .animate-pulse-slow {
+            animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .4; }
+        }
+    </style>
+</head>
+<body class="text-gray-100 min-h-screen py-8 px-4 sm:px-6 lg:px-8 font-sans">
+
+    <div class="max-w-7xl mx-auto space-y-8">
+        
+        <!-- Header -->
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center p-6 glass-card rounded-2xl shadow-xl gap-4">
+            <div>
+                <h1 class="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-violet-400 via-fuchsia-400 to-blue-400 bg-clip-text text-transparent">
+                    VideoAI Bot Admin Panel
+                </h1>
+                <p class="text-gray-400 mt-1 text-sm">Bot faoliyati va foydalanuvchilarni real-vaqt rejimida kuzatish</p>
+            </div>
+            
+            <div class="flex flex-wrap items-center gap-3">
+                <!-- Status indicator -->
+                <div class="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold glass-card">
+                    {% if bot_running %}
+                        <span class="h-2 w-2 rounded-full bg-emerald-500 animate-ping"></span>
+                        <span class="h-2 w-2 rounded-full bg-emerald-500 absolute"></span>
+                        <span class="text-emerald-400 ml-1">Bot Aktiv (Polling)</span>
+                    {% else %}
+                        <span class="h-2 w-2 rounded-full bg-amber-500 animate-pulse"></span>
+                        <span class="text-amber-400">Bot To'xtatilgan</span>
+                    {% endif %}
+                </div>
+
+                <!-- Maintenance mode indicator -->
+                <div class="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold glass-card">
+                    {% if maintenance_mode %}
+                        <span class="h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>
+                        <span class="text-red-400">Texnik Rejim Faol</span>
+                    {% else %}
+                        <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                        <span class="text-emerald-400">Normal Rejim</span>
+                    {% endif %}
+                </div>
+
+                <div class="text-sm text-gray-400 ml-2">
+                    Xush kelibsiz, <span class="text-white font-bold">{{ username }}</span>!
+                </div>
+            </div>
+        </header>
+
+        <!-- Stats Grid -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Total Users -->
+            <div class="p-6 glass-card rounded-2xl shadow-lg relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
+                <div class="absolute -right-4 -bottom-4 text-violet-500/10 group-hover:scale-110 transition-transform duration-300">
+                    <svg class="h-24 w-24" fill="currentColor" viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                </div>
+                <p class="text-gray-400 text-sm font-semibold tracking-wider uppercase">Jami foydalanuvchilar</p>
+                <h3 class="text-4xl font-bold mt-2 text-white">{{ "{:,}".format(total_users) }}</h3>
+                <p class="text-emerald-400 text-xs mt-2 font-medium flex items-center">
+                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 10l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l-7-7-7 7m7-7v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                    Bugun: +{{ new_users_today }}
+                </p>
+            </div>
+
+            <!-- Videos Generated -->
+            <div class="p-6 glass-card rounded-2xl shadow-lg relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
+                <div class="absolute -right-4 -bottom-4 text-blue-500/10 group-hover:scale-110 transition-transform duration-300">
+                    <svg class="h-24 w-24" fill="currentColor" viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4zM14 13h-3v3H9v-3H6v-2h3V8h2v3h3v2z"/></svg>
+                </div>
+                <p class="text-gray-400 text-sm font-semibold tracking-wider uppercase">Yaratilgan videolar</p>
+                <h3 class="text-4xl font-bold mt-2 text-white">{{ "{:,}".format(total_videos) }}</h3>
+                <p class="text-blue-400 text-xs mt-2 font-medium">Bugun: {{ today_videos }} video</p>
+            </div>
+
+            <!-- Today's Revenue -->
+            <div class="p-6 glass-card rounded-2xl shadow-lg relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
+                <div class="absolute -right-4 -bottom-4 text-emerald-500/10 group-hover:scale-110 transition-transform duration-300">
+                    <svg class="h-24 w-24" fill="currentColor" viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 1.21-1.04 1.9-2.7 1.9-1.98 0-2.76-.85-2.87-2.1H6.04c.1 2.05 1.7 3.32 3.76 3.81V21h3v-2.19c2.01-.39 3.56-1.63 3.56-3.61 0-2.8-2.52-3.7-4.52-4.3z"/></svg>
+                </div>
+                <p class="text-gray-400 text-sm font-semibold tracking-wider uppercase">Bugungi daromad</p>
+                <h3 class="text-4xl font-bold mt-2 text-emerald-400">{{ "{:,.0f}".format(today_revenue) }} <span class="text-lg">so'm</span></h3>
+                <p class="text-emerald-500 text-xs mt-2 font-medium">Barcha tasdiqlanganlar</p>
+            </div>
+
+            <!-- Total Revenue -->
+            <div class="p-6 glass-card rounded-2xl shadow-lg relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
+                <div class="absolute -right-4 -bottom-4 text-amber-500/10 group-hover:scale-110 transition-transform duration-300">
+                    <svg class="h-24 w-24" fill="currentColor" viewBox="0 0 24 24"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+                </div>
+                <p class="text-gray-400 text-sm font-semibold tracking-wider uppercase">Umumiy daromad</p>
+                <h3 class="text-4xl font-bold mt-2 text-amber-400">{{ "{:,.0f}".format(total_revenue) }} <span class="text-lg">so'm</span></h3>
+                <p class="text-amber-500 text-xs mt-2 font-medium">Butun vaqt bo'yicha</p>
+            </div>
+        </section>
+
+        <!-- Reports Download section -->
+        <section class="glass-card p-6 rounded-2xl shadow-xl">
+            <h2 class="text-xl font-bold mb-4 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-violet-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                Tizim hisobotlarini yuklab olish
+            </h2>
+            <div class="flex flex-wrap gap-4">
+                <a href="/admin/reports/daily" class="px-5 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white rounded-xl font-semibold shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30 transform hover:-translate-y-0.5 transition duration-200 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    Oxirgi 30 kunlik hisobot (CSV)
+                </a>
+                <a href="/admin/reports/monthly" class="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white rounded-xl font-semibold shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/30 transform hover:-translate-y-0.5 transition duration-200 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    Yillik oylik hisobot (CSV)
+                </a>
+            </div>
+        </section>
+
+        <!-- Balance Adjust and Recent Users Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Left: Adjust Balance Card -->
+            <div class="glass-card p-6 rounded-2xl shadow-xl lg:col-span-1 h-fit">
+                <h2 class="text-xl font-bold mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    Balansni o'zgartirish
+                </h2>
+                <form action="/admin/adjust-balance" method="POST" class="space-y-4">
+                    <div>
+                        <label class="block text-gray-400 text-sm mb-2" for="user_id">Foydalanuvchi Telegram ID</label>
+                        <input class="w-full px-4 py-2.5 rounded-xl bg-gray-900/60 border border-gray-800 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 focus:outline-none text-white transition placeholder-gray-600" type="number" name="user_id" id="user_id" required placeholder="Masalan: 123456789">
+                    </div>
+                    <div>
+                        <label class="block text-gray-400 text-sm mb-2" for="amount">Miqdor (so'mda)</label>
+                        <input class="w-full px-4 py-2.5 rounded-xl bg-gray-900/60 border border-gray-800 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 focus:outline-none text-white transition placeholder-gray-600" type="number" step="any" name="amount" id="amount" required placeholder="Masalan: 10000 (Kamaytirish uchun -10000)">
+                        <p class="text-xs text-gray-500 mt-1">Foydalanuvchining hisobiga pul qo'shish yoki ayirish uchun minus qiymat bering.</p>
+                    </div>
+                    <button class="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-brand-dark font-bold rounded-xl shadow-lg shadow-orange-500/10 hover:shadow-orange-500/20 transform hover:-translate-y-0.5 transition duration-200 uppercase tracking-wider text-sm" type="submit">
+                        Balansni yangilash
+                    </button>
+                </form>
+            </div>
+
+            <!-- Right: Recent Users list -->
+            <div class="glass-card p-6 rounded-2xl shadow-xl lg:col-span-2 overflow-hidden">
+                <h2 class="text-xl font-bold mb-4 flex justify-between items-center">
+                    <span class="flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-violet-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                        Oxirgi foydalanuvchilar
+                    </span>
+                    <span class="text-xs text-gray-400">Oxirgi 10 ta</span>
+                </h2>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-gray-800 text-gray-400 text-xs font-semibold uppercase tracking-wider">
+                                <th class="pb-3 pl-2">User ID</th>
+                                <th class="pb-3">Ism / Username</th>
+                                <th class="pb-3">Til</th>
+                                <th class="pb-3 text-right">Balans</th>
+                                <th class="pb-3 text-right pr-2">Muv. videolar</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-800/50 text-sm">
+                            {% for u in recent_users %}
+                            <tr class="hover:bg-gray-800/30 transition duration-150">
+                                <td class="py-3 pl-2 font-mono text-gray-300 font-semibold">{{ u.id }}</td>
+                                <td class="py-3">
+                                    <div class="font-medium text-white">{{ u.full_name or 'Noma\'lum' }}</div>
+                                    <div class="text-xs text-gray-500">{% if u.username %}@{{ u.username }}{% else %}yo'q{% endif %}</div>
+                                </td>
+                                <td class="py-3">
+                                    <span class="px-2 py-0.5 rounded text-xs font-medium uppercase {% if u.language == 'uz' %}bg-blue-500/10 text-blue-400{% else %}bg-gray-800 text-gray-400{% endif %}">
+                                        {{ u.language }}
+                                    </span>
+                                </td>
+                                <td class="py-3 text-right font-semibold text-emerald-400 font-mono">{{ "{:,.0f}".format(u.balance) }} so'm</td>
+                                <td class="py-3 text-right font-medium text-white pr-2">{{ u.total_videos }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payments and Generations Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            <!-- Recent Payments -->
+            <div class="glass-card p-6 rounded-2xl shadow-xl">
+                <h2 class="text-xl font-bold mb-4 flex justify-between items-center">
+                    <span class="flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+                        Oxirgi to'lovlar
+                    </span>
+                    <span class="text-xs text-gray-400">Oxirgi 5 ta</span>
+                </h2>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="border-b border-gray-800 text-gray-400 text-xs font-semibold uppercase tracking-wider">
+                                <th class="pb-2">Foydalanuvchi</th>
+                                <th class="pb-2">Summa</th>
+                                <th class="pb-2">Tizim</th>
+                                <th class="pb-2 text-right">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-800/30">
+                            {% for p in recent_payments %}
+                            <tr class="hover:bg-gray-800/20 transition">
+                                <td class="py-2.5">
+                                    <div class="font-mono text-gray-300 font-semibold">{{ p.user_id }}</div>
+                                    <div class="text-xs text-gray-500">{{ p.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+                                </td>
+                                <td class="py-2.5 font-semibold text-white font-mono">{{ "{:,.0f}".format(p.amount) }} so'm</td>
+                                <td class="py-2.5">
+                                    <span class="px-2 py-0.5 rounded text-xs font-medium uppercase bg-slate-800 text-slate-300">
+                                        {{ p.provider }}
+                                    </span>
+                                </td>
+                                <td class="py-2.5 text-right">
+                                    <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase 
+                                        {% if p.status == 'confirmed' %}bg-emerald-500/10 text-emerald-400
+                                        {% elif p.status == 'pending' %}bg-amber-500/10 text-amber-400
+                                        {% else %}bg-rose-500/10 text-rose-400{% endif %}">
+                                        {{ p.status }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Recent Video Generations -->
+            <div class="glass-card p-6 rounded-2xl shadow-xl">
+                <h2 class="text-xl font-bold mb-4 flex justify-between items-center">
+                    <span class="flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                        Oxirgi video buyurtmalar
+                    </span>
+                    <span class="text-xs text-gray-400">Oxirgi 5 ta</span>
+                </h2>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="border-b border-gray-800 text-gray-400 text-xs font-semibold uppercase tracking-wider">
+                                <th class="pb-2">User ID</th>
+                                <th class="pb-2">Prompt</th>
+                                <th class="pb-2">Provayder</th>
+                                <th class="pb-2 text-right">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-800/30">
+                            {% for g in recent_gens %}
+                            <tr class="hover:bg-gray-800/20 transition">
+                                <td class="py-2.5 font-mono text-gray-300 font-semibold">{{ g.user_id }}</td>
+                                <td class="py-2.5 max-w-[180px] truncate text-gray-400" title="{{ g.prompt }}">
+                                    {{ g.prompt }}
+                                </td>
+                                <td class="py-2.5">
+                                    <span class="px-2 py-0.5 rounded text-xs font-medium uppercase bg-indigo-500/10 text-indigo-400">
+                                        {{ g.api_provider or 'Noma\'lum' }}
+                                    </span>
+                                </td>
+                                <td class="py-2.5 text-right">
+                                    <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase 
+                                        {% if g.status == 'done' %}bg-emerald-500/10 text-emerald-400
+                                        {% elif g.status == 'processing' or g.status == 'pending' %}bg-blue-500/10 text-blue-400
+                                        {% else %}bg-rose-500/10 text-rose-400{% endif %}">
+                                        {{ g.status }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Simple footer -->
+    <footer class="text-center text-gray-600 text-xs mt-12 py-4">
+        &copy; 2026 VideoAI Bot Admin Panel. Barcha huquqlar himoyalangan.
+    </footer>
+
+</body>
+</html>

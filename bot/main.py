@@ -28,9 +28,16 @@ def setup_logging() -> None:
     logging.getLogger("aiogram").setLevel(logging.INFO)
 
 
+from bot.middleware.maintenance import MaintenanceMiddleware
+
+
 def create_dispatcher(settings: Settings) -> Dispatcher:
     storage = MemoryStorage()
     dp = Dispatcher(storage=storage)
+    
+    # Register maintenance middleware as outer middleware
+    dp.message.outer_middleware(MaintenanceMiddleware())
+    
     dp.include_router(start_router)
     # dp.include_router(video_router)
     # dp.include_router(payment_router)
