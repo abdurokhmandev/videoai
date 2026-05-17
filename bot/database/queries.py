@@ -33,7 +33,7 @@ AsyncSessionLocal = async_sessionmaker(
 )
 
 
-from sqlalchemy import select, update, delete, func, and_, or_, desc, text
+from sqlalchemy import select, update, delete, func, and_, or_, desc, text, Integer
 
 async def init_db():
     """Create all tables and auto-migrate schema"""
