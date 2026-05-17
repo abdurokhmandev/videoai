@@ -468,11 +468,12 @@
             formData.append('amount', amount);
             
             try {
-                const res = await fetch(API_BASE + '/api/adjust-balance', {
+                const data = await fetchAPI('/api/adjust-balance', {
                     method: 'POST',
                     body: formData
                 });
-                const data = await res.json();
+                if(!data) return;
+                
                 if(data.status === 'success') {
                     alert("Muvaffaqiyatli! Yangi balans: " + data.new_balance);
                     document.getElementById('adj-uid').value = '';
@@ -495,12 +496,12 @@
             btn.innerHTML = `<svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Yuborilmoqda...`;
             
             try {
-                const res = await fetch(API_BASE + '/api/broadcast', {
+                const data = await fetchAPI('/api/broadcast', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({text: text})
                 });
-                const data = await res.json();
+                if(!data) throw new Error("API xatosi yuz berdi yoki ruxsat etilmadi.");
                 
                 statusText.classList.remove('hidden', 'text-red-500');
                 if(data.status === 'success') {
