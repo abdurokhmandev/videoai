@@ -1,0 +1,424 @@
+import logging
+import secrets
+import string
+from decimal import Decimal
+from datetime import datetime, timedelta, timezone
+from typing import Optional, List, Tuple
+
+from sqlalchemy import select, update, delete, func, and_, or_, desc
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+
+from bot.database.models import Base, User, VideoGeneration, Payment, Referral
+from bot.config import settings
+
+logger = logging.getLogger(__name__)
+
+# Create async engine
+engine = create_async_engine(
+    settings.DATABASE_URL,
+    echo=False,
+    pool_size=10,
+    max_overflow=20,
+    pool_pre_ping=True,
+)
+
+AsyncSessionLocal = async_sessionmaker(
+    engine, class_=AsyncSession, expire_on_commit=False
+)
+
+
+async def init_db():
+    """Create all tables"""
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    logger.info("Database tables created/verified")
+
+
+def generate_referral_code(length: int = 8) -> str:
+    """Generate unique referral code"""
+    chars = string.ascii_uppercase + string.digits
+    return "".join(secrets.choice(chars) for _ in range(length))
+
+
+# ─── USER QUERIES ─────────────────────────────────────────────────────────────
+
+async def get_or_create_user(
+    session: AsyncSession,
+    user_id: int,
+    username: Optional[str],
+    full_name: Optional[str],
+) -> Tuple[User, bool]:
+    """Get existing user or create new one. Returns (user, is_new)"""
+    result = await session.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+
+    if user:
+        # Update last_active and info
+        user.last_active = func.now()
+        if username:
+            user.username = username
+        if full_name:
+            user.full_name = full_name
+        await session.commit()
+        return user, False
+
+    # Create new user with referral code
+    ref_code = generate_referral_code()
+    user = User(
+        id=user_id,
+        username=username,
+        full_name=full_name,
+        referral_code=ref_code,
+    )
+    session.add(user)
+    await session.commit()
+    await session.refresh(user)
+    return user, True
+
+
+async def get_user(session: AsyncSession, user_id: int) -> Optional[User]:
+    result = await session.execute(select(User).where(User.id == user_id))
+    return result.scalar_one_or_none()
+
+
+async def get_user_by_referral_code(
+    session: AsyncSession, ref_code: str
+) -> Optional[User]:
+    result = await session.execute(
+        select(User).where(User.referral_code == ref_code)
+    )
+    return result.scalar_one_or_none()
+
+
+async def add_balance(
+    session: AsyncSession, user_id: int, amount: Decimal
+) -> Decimal:
+    """Add balance to user. Returns new balance."""
+    result = await session.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise ValueError(f"User {user_id} not found")
+    user.balance += amount
+    await session.commit()
+    await session.refresh(user)
+    return user.balance
+
+
+async def deduct_balance(
+    session: AsyncSession, user_id: int, amount: Decimal
+) -> Decimal:
+    """Deduct balance from user. Returns new balance."""
+    result = await session.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise ValueError(f"User {user_id} not found")
+    if user.balance < amount:
+        raise ValueError("Insufficient balance")
+    user.balance -= amount
+    await session.commit()
+    await session.refresh(user)
+    return user.balance
+
+
+async def mark_free_used(session: AsyncSession, user_id: int):
+    await session.execute(
+        update(User).where(User.id == user_id).values(free_used=True)
+    )
+    await session.commit()
+
+
+async def set_language(session: AsyncSession, user_id: int, lang: str):
+    await session.execute(
+        update(User).where(User.id == user_id).values(language=lang)
+    )
+    await session.commit()
+
+
+async def block_user(session: AsyncSession, user_id: int, blocked: bool):
+    await session.execute(
+        update(User).where(User.id == user_id).values(is_blocked=blocked)
+    )
+    await session.commit()
+
+
+async def get_all_users(session: AsyncSession) -> List[User]:
+    result = await session.execute(select(User))
+    return list(result.scalars().all())
+
+
+async def get_active_users(session: AsyncSession, days: int = 30) -> List[User]:
+    cutoff = datetime.utcnow() - timedelta(days=days)
+    result = await session.execute(
+        select(User).where(
+            and_(User.last_active >= cutoff, User.is_blocked == False)
+        )
+    )
+    return list(result.scalars().all())
+
+
+async def get_inactive_users(session: AsyncSession, days: int = 3) -> List[User]:
+    cutoff = datetime.utcnow() - timedelta(days=days)
+    result = await session.execute(
+        select(User).where(
+            and_(User.last_active <= cutoff, User.is_blocked == False)
+        )
+    )
+    return list(result.scalars().all())
+
+
+async def get_user_count(session: AsyncSession) -> int:
+    result = await session.execute(select(func.count(User.id)))
+    return result.scalar_one()
+
+
+async def get_new_users_today(session: AsyncSession) -> int:
+    today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    result = await session.execute(
+        select(func.count(User.id)).where(User.created_at >= today)
+    )
+    return result.scalar_one()
+
+
+async def get_top_users(session: AsyncSession, limit: int = 10) -> List[User]:
+    result = await session.execute(
+        select(User).order_by(desc(User.total_spent)).limit(limit)
+    )
+    return list(result.scalars().all())
+
+
+async def manual_adjust_balance(
+    session: AsyncSession, user_id: int, amount: Decimal, admin_note: str = ""
+):
+    """Admin: manually add or subtract balance"""
+    result = await session.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise ValueError(f"User {user_id} not found")
+    user.balance += amount
+    if user.balance < 0:
+        user.balance = Decimal("0.00")
+    await session.commit()
+    return user
+
+
+# ─── VIDEO GENERATION QUERIES ─────────────────────────────────────────────────
+
+async def create_generation(
+    session: AsyncSession,
+    user_id: int,
+    prompt: str,
+    api_provider: str,
+    cost_som: Decimal,
+) -> VideoGeneration:
+    gen = VideoGeneration(
+        user_id=user_id,
+        prompt=prompt,
+        api_provider=api_provider,
+        cost_som=cost_som,
+        status="processing",
+    )
+    session.add(gen)
+    await session.commit()
+    await session.refresh(gen)
+    return gen
+
+
+async def complete_generation(
+    session: AsyncSession,
+    gen_id: int,
+    video_url: str,
+    api_job_id: Optional[str] = None,
+):
+    """Mark generation as done"""
+    result = await session.execute(
+        select(VideoGeneration).where(VideoGeneration.id == gen_id)
+    )
+    gen = result.scalar_one_or_none()
+    if gen:
+        gen.status = "done"
+        gen.video_url = video_url
+        gen.api_job_id = api_job_id
+        gen.completed_at = func.now()
+        await session.commit()
+
+
+async def fail_generation(
+    session: AsyncSession, gen_id: int, error_msg: str = ""
+):
+    result = await session.execute(
+        select(VideoGeneration).where(VideoGeneration.id == gen_id)
+    )
+    gen = result.scalar_one_or_none()
+    if gen:
+        gen.status = "failed"
+        gen.error_message = error_msg
+        gen.completed_at = func.now()
+        await session.commit()
+
+
+async def update_user_stats(session: AsyncSession, user_id: int, cost_som: Decimal):
+    """Update total_spent and total_videos after successful generation"""
+    result = await session.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    if user:
+        user.total_spent += cost_som
+        user.total_videos += 1
+        await session.commit()
+
+
+async def get_user_history(
+    session: AsyncSession, user_id: int, limit: int = 10, offset: int = 0
+) -> List[VideoGeneration]:
+    result = await session.execute(
+        select(VideoGeneration)
+        .where(VideoGeneration.user_id == user_id)
+        .order_by(desc(VideoGeneration.created_at))
+        .limit(limit)
+        .offset(offset)
+    )
+    return list(result.scalars().all())
+
+
+async def get_user_generation_count(session: AsyncSession, user_id: int) -> int:
+    result = await session.execute(
+        select(func.count(VideoGeneration.id)).where(
+            VideoGeneration.user_id == user_id
+        )
+    )
+    return result.scalar_one()
+
+
+async def get_today_video_count(session: AsyncSession) -> int:
+    today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    result = await session.execute(
+        select(func.count(VideoGeneration.id)).where(
+            VideoGeneration.created_at >= today
+        )
+    )
+    return result.scalar_one()
+
+
+async def get_today_revenue(session: AsyncSession) -> Decimal:
+    today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    result = await session.execute(
+        select(func.sum(Payment.amount)).where(
+            and_(
+                Payment.created_at >= today,
+                Payment.status == "confirmed",
+            )
+        )
+    )
+    val = result.scalar_one()
+    return val if val else Decimal("0.00")
+
+
+# ─── PAYMENT QUERIES ──────────────────────────────────────────────────────────
+
+async def create_payment(
+    session: AsyncSession,
+    user_id: int,
+    amount: Decimal,
+    provider: str,
+    package: str,
+    provider_tx_id: Optional[str] = None,
+) -> Payment:
+    payment = Payment(
+        user_id=user_id,
+        amount=amount,
+        provider=provider,
+        package=package,
+        provider_tx_id=provider_tx_id,
+        status="pending",
+    )
+    session.add(payment)
+    await session.commit()
+    await session.refresh(payment)
+    return payment
+
+
+async def get_payment(session: AsyncSession, payment_id: int) -> Optional[Payment]:
+    result = await session.execute(
+        select(Payment).where(Payment.id == payment_id)
+    )
+    return result.scalar_one_or_none()
+
+
+async def get_payment_by_provider_id(
+    session: AsyncSession, provider_tx_id: str
+) -> Optional[Payment]:
+    result = await session.execute(
+        select(Payment).where(Payment.provider_tx_id == provider_tx_id)
+    )
+    return result.scalar_one_or_none()
+
+
+async def confirm_payment(session: AsyncSession, payment_id: int):
+    result = await session.execute(
+        select(Payment).where(Payment.id == payment_id)
+    )
+    payment = result.scalar_one_or_none()
+    if payment:
+        payment.status = "confirmed"
+        payment.confirmed_at = func.now()
+        await session.commit()
+    return payment
+
+
+async def cancel_payment(session: AsyncSession, provider_tx_id: str):
+    result = await session.execute(
+        select(Payment).where(Payment.provider_tx_id == provider_tx_id)
+    )
+    payment = result.scalar_one_or_none()
+    if payment:
+        payment.status = "cancelled"
+        await session.commit()
+    return payment
+
+
+async def get_recent_payments(
+    session: AsyncSession, limit: int = 20
+) -> List[Payment]:
+    result = await session.execute(
+        select(Payment).order_by(desc(Payment.created_at)).limit(limit)
+    )
+    return list(result.scalars().all())
+
+
+# ─── REFERRAL QUERIES ─────────────────────────────────────────────────────────
+
+async def create_referral(
+    session: AsyncSession, referrer_id: int, referred_id: int
+) -> Optional[Referral]:
+    """Create referral link. Returns None if already exists."""
+    try:
+        ref = Referral(referrer_id=referrer_id, referred_id=referred_id)
+        session.add(ref)
+        await session.commit()
+        await session.refresh(ref)
+        return ref
+    except Exception:
+        await session.rollback()
+        return None
+
+
+async def give_referral_bonus(session: AsyncSession, referral_id: int):
+    result = await session.execute(
+        select(Referral).where(Referral.id == referral_id)
+    )
+    ref = result.scalar_one_or_none()
+    if ref:
+        ref.bonus_given = True
+        await session.commit()
+
+
+async def get_referral_stats(session: AsyncSession, user_id: int) -> dict:
+    """Get referral statistics for a user"""
+    result = await session.execute(
+        select(func.count(Referral.id), func.sum(
+            func.cast(Referral.bonus_given, Integer)
+        )).where(Referral.referrer_id == user_id)
+    )
+    row = result.one()
+    total = row[0] or 0
+    bonuses = row[1] or 0
+    return {"total_referred": total, "bonuses_given": bonuses}
