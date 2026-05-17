@@ -419,6 +419,28 @@ async def api_adjust_balance(
         raise HTTPException(status_code=400, detail=str(e))
 
 
+@app.get("/api/stats")
+async def api_stats(
+    username: str = Depends(check_admin_credentials)
+):
+    async with AsyncSessionLocal() as session:
+        total_users = await get_user_count(session)
+        new_users_today = await get_new_users_today(session)
+        today_videos = await get_today_video_count(session)
+        today_rev = await get_today_revenue(session)
+        
+        result_total_payments = await session.execute(select(Payment).where(Payment.status == "confirmed"))
+        payments_confirmed = result_total_payments.scalars().all()
+        total_revenue = sum(package_price_som(p.package or "") for p in payments_confirmed)
+        
+    return {
+        "total_users": total_users,
+        "new_users_today": new_users_today,
+        "today_videos": today_videos,
+        "today_revenue": today_rev,
+        "total_revenue": total_revenue
+    }
+
 @app.get("/api/users")
 async def api_users(
     skip: int = 0, limit: int = 50,

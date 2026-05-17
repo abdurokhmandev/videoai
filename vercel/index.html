@@ -355,17 +355,13 @@
         }
 
         async function loadDashboard() {
-            // Because /admin HTML renders dashboard data directly, we can fetch /health or create a specific stats endpoint
-            // Actually, we can just load the HTML document or create an api endpoint.
-            // Since we didn't write an API specifically for stats grid in the plan, I will simulate it via the dashboard endpoint 
-            // Wait, we need the exact data. Let's make sure our FastAPI has /api/stats. 
-            // I'll fetch from the original /admin if possible, but actually we can just keep the values populated if we are in jinja,
-            // OR we can make a quick /api/stats or use the data injected into HTML if this is served from FastAPI.
-            // But since this is Vercel static HTML, we need /api/stats. 
-            // I will just use dummy data for now or leave it empty if the endpoint doesn't exist, but it exists!
-            // Wait, the /admin endpoint returned JSON when accept was application/json? No, it returns HTML.
-            // Let's implement /api/users to just show something.
-            // I will implement fetching logic.
+            const data = await fetchAPI('/api/stats');
+            if(!data) return;
+            
+            document.getElementById('stat-users').innerText = data.total_users + ' ta';
+            document.getElementById('stat-new-users').innerText = '+' + data.new_users_today + ' ta';
+            document.getElementById('stat-videos').innerText = data.today_videos + ' ta';
+            document.getElementById('stat-revenue').innerText = data.total_revenue.toLocaleString() + " so'm";
         }
 
         async function loadUsers() {
