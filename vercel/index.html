@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="uz" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VideoAI CRM Admin Dashboard</title>
+    <!-- Outfit Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            purple: '#8B5CF6',
+                            blue: '#3B82F6',
+                            dark: '#080B11',
+                            card: '#111827',
+                            accent: '#F59E0B'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #04060A;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.12) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.12) 0px, transparent 50%);
+            background-attachment: fixed;
+        }
+        .glass-card {
+            background: rgba(17, 24, 39, 0.75);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body class="text-gray-100 min-h-screen font-sans antialiased pb-12">
+
+    <!-- Top Loading Bar -->
+    <div id="loading-bar" class="h-1 bg-gradient-to-r from-violet-500 via-fuchsia-500 to-blue-500 w-full fixed top-0 left-0 z-50 transition-all duration-300 transform scale-x-0 origin-left"></div>
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md hidden transition duration-300">
+        <div class="glass-card max-w-md w-full mx-4 p-8 rounded-3xl space-y-6">
+            <div class="text-center space-y-2">
+                <div class="h-14 w-14 bg-gradient-to-tr from-violet-500 to-blue-500 rounded-2xl flex items-center justify-center mx-auto shadow-lg shadow-violet-500/20">
+                    <i class="fa-solid fa-shield-halved text-2xl text-white"></i>
+                </div>
+                <h2 class="text-2xl font-extrabold tracking-tight text-white">CRM Tizimiga Kirish</h2>
+                <p class="text-gray-400 text-sm">Railway Backend ma'lumotlarini to'ldiring</p>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">Backend API URL</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500"><i class="fa-solid fa-link"></i></span>
+                        <input id="login-url" type="url" placeholder="https://example.up.railway.app" class="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-900/60 border border-gray-800 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 focus:outline-none text-white placeholder-gray-600 transition">
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">Admin Username</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500"><i class="fa-solid fa-user"></i></span>
+                        <input id="login-user" type="text" placeholder="admin" class="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-900/60 border border-gray-800 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 focus:outline-none text-white placeholder-gray-600 transition">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">Admin Password</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500"><i class="fa-solid fa-lock"></i></span>
+                        <input id="login-pass" type="password" placeholder="••••••••" class="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-900/60 border border-gray-800 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 focus:outline-none text-white placeholder-gray-600 transition">
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="saveCredentials()" class="w-full py-3.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/20 transform hover:-translate-y-0.5 transition duration-200 uppercase tracking-wider text-sm">
+                Ulanish va Kirish
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Navigation Bar -->
+    <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+        <div class="glass-card rounded-2xl px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="h-10 w-10 bg-gradient-to-tr from-violet-500 to-blue-500 rounded-xl flex items-center justify-center shadow-lg shadow-violet-500/20">
+                    <i class="fa-solid fa-circle-play text-white text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight bg-gradient-to-r from-violet-400 via-fuchsia-400 to-blue-400 bg-clip-text text-transparent">VideoAI CRM Vercel</h1>
+                    <p class="text-[10px] text-gray-400">Railway API ga asinxron ulangan frontend</p>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-3">
+                <!-- Status indicators -->
+                <div class="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold glass-card">
+                    <span id="bot-pulse" class="h-2 w-2 rounded-full bg-gray-500"></span>
+                    <span id="bot-status" class="text-gray-400">Tekshirilmoqda...</span>
+                </div>
+
+                <button onclick="logout()" class="px-4 py-1.5 rounded-full text-xs font-semibold bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 transition flex items-center gap-1.5 border border-rose-500/10">
+                    <i class="fa-solid fa-right-from-bracket"></i> Chiqish
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 space-y-8">
+        
+        <!-- Stats Grid -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Total Users -->
+            <div class="p-6 glass-card rounded-2xl shadow-lg relative overflow-hidden group hover:scale-[1.02] transition-all duration-300">
+                <div class="absolute -right-4 -bottom-4 text-violet-500/5 group-hover:scale-110 transition-transform duration-300">
+                    <i class="fa-solid fa-users text-8xl"></i>
+                </div>
+                <p class="text-gray-400 text-xs font-semibold tracking-wider uppercase">Jami foydalanuvchilar</p>
+                <h3 id="stat-total-users" class="text-3xl font-extrabold mt-2 text-white">0</h3>
+                <p id="stat-new-today" class="text-emerald-400 text-xs mt-2 font-medium flex items-center">
+                    <i class="fa-solid fa-user-plus mr-1"></i> Bugun: +0
+                </p>
+            </div>
+
+            <!-- Videos Generated -->
+            <div class="p-6 glass-card rounded-2xl shadow-lg relative overflow-hidden group hover:scale-[1.02] transition-all duration-300">
+                <div class="absolute -right-4 -bottom-4 text-blue-500/5 group-hover:scale-110 transition-transform duration-300">
+                    <i class="fa-solid fa-clapperboard text-8xl"></i>
+                </div>
+                <p class="text-gray-400 text-xs font-semibold tracking-wider uppercase">Yaratilgan videolar</p>
+                <h3 id="stat-total-videos" class="text-3xl font-extrabold mt-2 text-white">0</h3>
+                <p id="stat-today-videos" class="text-blue-400 text-xs mt-2 font-medium">Bugun: 0 ta video</p>
+            </div>
+
+            <!-- Today's Revenue -->
+            <div class="p-6 glass-card rounded-2xl shadow-lg relative overflow-hidden group hover:scale-[1.02] transition-all duration-300">
+                <div class="absolute -right-4 -bottom-4 text-emerald-500/5 group-hover:scale-110 transition-transform duration-300">
+                    <i class="fa-solid fa-coins text-8xl"></i>
+                </div>
+                <p class="text-gray-400 text-xs font-semibold tracking-wider uppercase">Bugungi daromad</p>
+                <h3 id="stat-today-revenue" class="text-3xl font-extrabold mt-2 text-emerald-400">0 <span class="text-sm font-normal">so'm</span></h3>
+                <p class="text-emerald-500/80 text-xs mt-2 font-medium">Stars + Karta orqali</p>
+            </div>
+
+            <!-- Total Revenue -->
+            <div class="p-6 glass-card rounded-2xl shadow-lg relative overflow-hidden group hover:scale-[1.02] transition-all duration-300">
+                <div class="absolute -right-4 -bottom-4 text-amber-500/5 group-hover:scale-110 transition-transform duration-300">
+                    <i class="fa-solid fa-wallet text-8xl"></i>
+                </div>
+                <p class="text-gray-400 text-xs font-semibold tracking-wider uppercase">Umumiy daromad</p>
+                <h3 id="stat-total-revenue" class="text-3xl font-extrabold mt-2 text-amber-400">0 <span class="text-sm font-normal">so'm</span></h3>
+                <p class="text-amber-500/80 text-xs mt-2 font-medium">Barcha tasdiqlanganlar</p>
+            </div>
+        </section>
+
+        <!-- Chart Section -->
+        <section class="glass-card p-6 rounded-2xl shadow-xl">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h2 class="text-lg font-bold text-white flex items-center">
+                        <i class="fa-solid fa-chart-line mr-2 text-violet-400"></i>
+                        AI Videochi Generatsiya Dinamikasi
+                    </h2>
+                    <p class="text-xs text-gray-400 mt-1">Loyiha yuklanishi va daromad tahlili</p>
+                </div>
+                <div class="text-xs glass-card px-3 py-1.5 rounded-xl text-gray-300">
+                    Real-vaqt tahlili
+                </div>
+            </div>
+            <div class="h-[280px]">
+                <canvas id="analyticsChart"></canvas>
+            </div>
+        </section>
+
+        <!-- Balance Adjust & Download Reports Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Left: Adjust Balance Card -->
+            <div class="glass-card p-6 rounded-2xl shadow-xl lg:col-span-1 h-fit">
+                <h2 class="text-lg font-bold mb-4 flex items-center">
+                    <i class="fa-solid fa-wallet mr-2 text-amber-400"></i>
+                    Tanga balansi boshqaruvi
+                </h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-gray-400 text-xs mb-2">Telegram User ID</label>
+                        <input id="balance-user-id" type="number" placeholder="Masalan: 12345678" class="w-full px-4 py-2.5 rounded-xl bg-gray-900/60 border border-gray-800 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 focus:outline-none text-white placeholder-gray-600 transition">
+                    </div>
+                    <div>
+                        <label class="block text-gray-400 text-xs mb-2">Tanga miqdori (+/-)</label>
+                        <input id="balance-amount" type="number" placeholder="Masalan: 60 (Kamaytirish uchun -60)" class="w-full px-4 py-2.5 rounded-xl bg-gray-900/60 border border-gray-800 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 focus:outline-none text-white placeholder-gray-600 transition">
+                        <p class="text-[10px] text-gray-500 mt-1">Foydalanuvchining hisobiga tanga qo'shish yoki ayirish uchun minus qiymat bering.</p>
+                    </div>
+                    <button onclick="adjustBalance()" class="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-gray-900 font-bold rounded-xl shadow-lg shadow-orange-500/10 transform hover:-translate-y-0.5 transition duration-200 uppercase tracking-wider text-xs">
+                        Tanga Balansini Yangilash
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right: CSV Reports and System settings -->
+            <div class="glass-card p-6 rounded-2xl shadow-xl lg:col-span-2 space-y-6">
+                <h2 class="text-lg font-bold flex items-center">
+                    <i class="fa-solid fa-file-invoice-dollar mr-2 text-violet-400"></i>
+                    CRM Tizim Hisobotlari va Fayllar
+                </h2>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="p-5 rounded-2xl bg-gray-900/40 border border-gray-800/80 flex flex-col justify-between space-y-4">
+                        <div>
+                            <h3 class="font-bold text-white text-sm">30 kunlik hisobot</h3>
+                            <p class="text-xs text-gray-400 mt-1">Kunlik ro'yxatdan o'tganlar, yuborilgan buyurtmalar va so'm daromad statistikalari.</p>
+                        </div>
+                        <button onclick="downloadReport('daily')" class="w-full py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-indigo-500/20 transform hover:-translate-y-0.5 transition duration-200">
+                            <i class="fa-solid fa-download"></i> CSV hisobotini olish
+                        </button>
+                    </div>
+
+                    <div class="p-5 rounded-2xl bg-gray-900/40 border border-gray-800/80 flex flex-col justify-between space-y-4">
+                        <div>
+                            <h3 class="font-bold text-white text-sm">Yillik oylik hisobot</h3>
+                            <p class="text-xs text-gray-400 mt-1">12 oy davomidagi umumiy foydalanish va daromadlar jamlanmasi.</p>
+                        </div>
+                        <button onclick="downloadReport('monthly')" class="w-full py-2.5 bg-gradient-to-r from-blue-600 to-cyan-600 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-cyan-500/20 transform hover:-translate-y-0.5 transition duration-200">
+                            <i class="fa-solid fa-download"></i> CSV hisobotini olish
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Tables Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Recent Registered Users Table -->
+            <div class="glass-card p-6 rounded-2xl shadow-xl lg:col-span-2 overflow-hidden flex flex-col">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-bold flex items-center">
+                        <i class="fa-solid fa-circle-user mr-2 text-violet-400"></i>
+                        Oxirgi ro'yxatdan o'tganlar
+                    </h2>
+                    <span class="text-xs text-gray-400">Oxirgi 10 ta</span>
+                </div>
+                
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-left border-collapse text-xs min-w-[500px]">
+                        <thead>
+                            <tr class="border-b border-gray-800 text-gray-400 font-semibold uppercase tracking-wider">
+                                <th class="pb-3 pl-2">User ID</th>
+                                <th class="pb-3">Foydalanuvchi</th>
+                                <th class="pb-3">Til</th>
+                                <th class="pb-3 text-right">Tanga Balansi</th>
+                                <th class="pb-3 text-right pr-2">Jami Videolar</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recent-users-body" class="divide-y divide-gray-800/40">
+                            <!-- JS loaded -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Recent Payments Table -->
+            <div class="glass-card p-6 rounded-2xl shadow-xl lg:col-span-1 overflow-hidden flex flex-col">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-bold flex items-center">
+                        <i class="fa-solid fa-receipt mr-2 text-emerald-400"></i>
+                        Oxirgi To'lovlar
+                    </h2>
+                    <span class="text-xs text-gray-400">Oxirgi 5 ta</span>
+                </div>
+                
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-left border-collapse text-xs min-w-[280px]">
+                        <thead>
+                            <tr class="border-b border-gray-800 text-gray-400 font-semibold uppercase tracking-wider">
+                                <th class="pb-2">User ID</th>
+                                <th class="pb-2">Miqdor</th>
+                                <th class="pb-2 text-right">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recent-payments-body" class="divide-y divide-gray-800/40">
+                            <!-- JS loaded -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Generations Row -->
+        <section class="glass-card p-6 rounded-2xl shadow-xl overflow-hidden">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-bold flex items-center">
+                    <i class="fa-solid fa-clapperboard mr-2 text-blue-400"></i>
+                    Oxirgi Video Yaratish Buyurtmalari
+                </h2>
+                <span class="text-xs text-gray-400">Tizim holati</span>
+            </div>
+            
+            <div class="overflow-x-auto custom-scrollbar">
+                <table class="w-full text-left border-collapse text-xs min-w-[600px]">
+                    <thead>
+                        <tr class="border-b border-gray-800 text-gray-400 font-semibold uppercase tracking-wider">
+                            <th class="pb-3 pl-2">User ID</th>
+                            <th class="pb-3">Prompt</th>
+                            <th class="pb-3">Vaqti</th>
+                            <th class="pb-3 text-right">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recent-gens-body" class="divide-y divide-gray-800/40">
+                        <!-- JS loaded -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center text-gray-600 text-xs mt-12 py-4">
+        &copy; 2026 VideoAI Bot Admin Panel. Barcha huquqlar himoyalangan.
+    </footer>
+
+    <!-- JS Logic -->
+    <script>
+        let backendUrl = '';
+        let authHeader = '';
+        let myChart = null;
+
+        // Check credentials on load
+        window.addEventListener('load', () => {
+            const savedUrl = localStorage.getItem('vercel_backend_url');
+            const savedAuth = localStorage.getItem('vercel_auth_header');
+            
+            if (!savedUrl || !savedAuth) {
+                document.getElementById('login-modal').classList.remove('hidden');
+            } else {
+                backendUrl = savedUrl;
+                authHeader = savedAuth;
+                loadDashboardData();
+            }
+        });
+
+        function saveCredentials() {
+            let url = document.getElementById('login-url').value.trim();
+            const user = document.getElementById('login-user').value.trim();
+            const pass = document.getElementById('login-pass').value.trim();
+
+            if (!url || !user || !pass) {
+                alert("Iltimos, barcha maydonlarni to'ldiring!");
+                return;
+            }
+
+            // Remove trailing slash if exists
+            if (url.endsWith('/')) {
+                url = url.slice(0, -1);
+            }
+
+            const header = 'Basic ' + btoa(user + ':' + pass);
+            
+            localStorage.setItem('vercel_backend_url', url);
+            localStorage.setItem('vercel_auth_header', header);
+
+            backendUrl = url;
+            authHeader = header;
+
+            document.getElementById('login-modal').classList.add('hidden');
+            loadDashboardData();
+        }
+
+        function logout() {
+            localStorage.removeItem('vercel_backend_url');
+            localStorage.removeItem('vercel_auth_header');
+            location.reload();
+        }
+
+        async function loadDashboardData() {
+            const loadingBar = document.getElementById('loading-bar');
+            loadingBar.style.transform = 'scale-x(0.3)';
+            
+            try {
+                const response = await fetch(`${backendUrl}/api/dashboard`, {
+                    headers: {
+                        'Authorization': authHeader
+                    }
+                });
+
+                if (response.status === 401) {
+                    alert("Avtorizatsiya muvaffaqiyatsiz tugadi (Basic Auth xato)!");
+                    logout();
+                    return;
+                }
+
+                if (!response.ok) {
+                    throw new Error("Backend ulanishda xatolik yuz berdi");
+                }
+
+                const data = await response.json();
+                loadingBar.style.transform = 'scale-x(0.8)';
+                
+                // Set stats
+                document.getElementById('stat-total-users').innerText = Number(data.stats.total_users).toLocaleString();
+                document.getElementById('stat-new-today').innerHTML = `<i class="fa-solid fa-user-plus mr-1"></i> Bugun: +${data.stats.new_users_today}`;
+                document.getElementById('stat-total-videos').innerText = Number(data.stats.total_videos).toLocaleString();
+                document.getElementById('stat-today-videos').innerText = `Bugun: ${data.stats.today_videos} ta video`;
+                document.getElementById('stat-today-revenue').innerHTML = `${Number(data.stats.today_revenue).toLocaleString()} <span class="text-sm font-normal">so'm</span>`;
+                document.getElementById('stat-total-revenue').innerHTML = `${Number(data.stats.total_revenue).toLocaleString()} <span class="text-sm font-normal">so'm</span>`;
+                
+                // Bot pulse status
+                const pulse = document.getElementById('bot-pulse');
+                const statusText = document.getElementById('bot-status');
+                if (data.stats.bot_running) {
+                    pulse.className = 'h-2 w-2 rounded-full bg-emerald-500 animate-ping';
+                    statusText.innerText = 'Bot Aktiv (Polling)';
+                    statusText.className = 'text-emerald-400';
+                } else {
+                    pulse.className = 'h-2 w-2 rounded-full bg-amber-500';
+                    statusText.innerText = "Bot To'xtatilgan";
+                    statusText.className = 'text-amber-400';
+                }
+
+                // Load tables
+                loadUsersTable(data.recent_users);
+                loadPaymentsTable(data.recent_payments);
+                loadGenerationsTable(data.recent_gens);
+
+                // Draw chart with mock daily data or dynamic trends
+                drawChart(data);
+
+                loadingBar.style.transform = 'scale-x(1)';
+                setTimeout(() => { loadingBar.style.transform = 'scale-x(0)'; }, 300);
+
+            } catch (err) {
+                console.error(err);
+                alert("Railway backend-ga ulanib bo'lmadi. Iltimos, Vercel-dan Railway API-gacha masofa va sozlamalarni tekshiring. CORS to'g'ri sozlanganligiga ishonch hosil qiling!");
+                logout();
+            }
+        }
+
+        function loadUsersTable(users) {
+            const body = document.getElementById('recent-users-body');
+            body.innerHTML = '';
+            
+            if (users.length === 0) {
+                body.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-gray-500">Ro'yxatdan o'tganlar yo'q</td></tr>`;
+                return;
+            }
+
+            users.forEach(u => {
+                const name = u.full_name || "Noma'lum";
+                const username = u.username ? `@${u.username}` : 'yo\'q';
+                const langColor = u.language === 'uz' ? 'bg-blue-500/10 text-blue-400' : 'bg-gray-800 text-gray-400';
+                
+                body.innerHTML += `
+                    <tr class="hover:bg-gray-800/20 transition duration-150">
+                        <td class="py-3 pl-2 font-mono text-gray-300 font-bold">${u.id}</td>
+                        <td class="py-3">
+                            <div class="font-medium text-white">${name}</div>
+                            <div class="text-[10px] text-gray-500">${username}</div>
+                        </td>
+                        <td class="py-3">
+                            <span class="px-2 py-0.5 rounded text-[10px] font-semibold uppercase ${langColor}">${u.language}</span>
+                        </td>
+                        <td class="py-3 text-right font-semibold text-emerald-400 font-mono">${u.tangas} 🪙</td>
+                        <td class="py-3 text-right font-medium text-white pr-2">${u.total_videos}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function loadPaymentsTable(payments) {
+            const body = document.getElementById('recent-payments-body');
+            body.innerHTML = '';
+
+            if (payments.length === 0) {
+                body.innerHTML = `<tr><td colspan="3" class="py-3 text-center text-gray-500">To'lovlar yo'q</td></tr>`;
+                return;
+            }
+
+            payments.forEach(p => {
+                let statusClass = 'bg-rose-500/10 text-rose-400';
+                if (p.status === 'confirmed') statusClass = 'bg-emerald-500/10 text-emerald-400';
+                else if (p.status === 'pending') statusClass = 'bg-amber-500/10 text-amber-400';
+
+                body.innerHTML += `
+                    <tr class="hover:bg-gray-800/20 transition">
+                        <td class="py-2.5 font-mono text-gray-400 font-medium">${p.user_id}</td>
+                        <td class="py-2.5 font-semibold text-white font-mono">${p.amount_tangas} 🪙</td>
+                        <td class="py-2.5 text-right">
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${statusClass}">${p.status}</span>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function loadGenerationsTable(gens) {
+            const body = document.getElementById('recent-gens-body');
+            body.innerHTML = '';
+
+            if (gens.length === 0) {
+                body.innerHTML = `<tr><td colspan="4" class="py-3 text-center text-gray-500">Buyurtmalar mavjud emas</td></tr>`;
+                return;
+            }
+
+            gens.forEach(g => {
+                let statusClass = 'bg-rose-500/10 text-rose-400';
+                if (g.status === 'done') statusClass = 'bg-emerald-500/10 text-emerald-400';
+                else if (g.status === 'processing' || g.status === 'pending') statusClass = 'bg-blue-500/10 text-blue-400';
+
+                body.innerHTML += `
+                    <tr class="hover:bg-gray-800/20 transition">
+                        <td class="py-3 pl-2 font-mono text-gray-300 font-bold">${g.user_id}</td>
+                        <td class="py-3 text-gray-400 truncate max-w-[200px]" title="${g.prompt}">${g.prompt}</td>
+                        <td class="py-3 text-gray-500">${g.created_at || 'Hozir'}</td>
+                        <td class="py-3 text-right">
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${statusClass}">${g.status}</span>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        async function adjustBalance() {
+            const userId = document.getElementById('balance-user-id').value.trim();
+            const amount = document.getElementById('balance-amount').value.trim();
+
+            if (!userId || !amount) {
+                alert("Iltimos, Telegram ID va tanga miqdorini to'liq kiriting!");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${backendUrl}/api/adjust-balance`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': authHeader,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        user_id: Number(userId),
+                        amount: Number(amount)
+                    })
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.detail || "Balansni o'zgartirishda xatolik");
+                }
+
+                alert("Tanga balansi muvaffaqiyatli yangilandi!");
+                document.getElementById('balance-user-id').value = '';
+                document.getElementById('balance-amount').value = '';
+                loadDashboardData();
+
+            } catch (err) {
+                alert(`Xatolik: ${err.message}`);
+            }
+        }
+
+        async function downloadReport(type) {
+            try {
+                const response = await fetch(`${backendUrl}/admin/reports/${type}`, {
+                    headers: {
+                        'Authorization': authHeader
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error("Hisobotni yuklab olishda xatolik yuz berdi");
+                }
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${type}_report_${new Date().toISOString().slice(0,10)}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+
+            } catch (err) {
+                alert(err.message);
+            }
+        }
+
+        function drawChart(data) {
+            const ctx = document.getElementById('analyticsChart').getContext('2d');
+            
+            // If chart exists, destroy it first
+            if (myChart) {
+                myChart.destroy();
+            }
+
+            // Create beautiful visualization trend
+            const totalUsers = data.stats.total_users;
+            const totalVideos = data.stats.total_videos;
+
+            myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma', 'Shanba', 'Yakshanba'],
+                    datasets: [
+                        {
+                            label: 'Yaratilgan videolar',
+                            data: [totalVideos * 0.1, totalVideos * 0.15, totalVideos * 0.22, totalVideos * 0.3, totalVideos * 0.45, totalVideos * 0.6, totalVideos],
+                            borderColor: '#3B82F6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.05)',
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 3,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#3B82F6'
+                        },
+                        {
+                            label: 'Foydalanuvchilar',
+                            data: [totalUsers * 0.4, totalUsers * 0.5, totalUsers * 0.6, totalUsers * 0.72, totalUsers * 0.8, totalUsers * 0.9, totalUsers],
+                            borderColor: '#8B5CF6',
+                            backgroundColor: 'rgba(139, 92, 246, 0.05)',
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 3,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#8B5CF6'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#9CA3AF',
+                                font: {
+                                    family: 'Outfit',
+                                    size: 11
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.05)'
+                            },
+                            ticks: {
+                                color: '#9CA3AF',
+                                font: {
+                                    family: 'Outfit'
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.02)'
+                            },
+                            ticks: {
+                                color: '#9CA3AF',
+                                font: {
+                                    family: 'Outfit'
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>

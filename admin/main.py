@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 from fastapi import FastAPI, Depends, HTTPException, status, Request, Form
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, StreamingResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
@@ -96,6 +97,14 @@ app = FastAPI(
     lifespan=lifespan,
     docs_url=None,
     redoc_url=None
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
@@ -298,3 +307,113 @@ async def get_monthly_report(username: str = Depends(check_admin_credentials)):
     response = StreamingResponse(iter([output.getvalue()]), media_type="text/csv")
     response.headers["Content-Disposition"] = "attachment; filename=monthly_report.csv"
     return response
+
+
+@app.get("/api/dashboard")
+async def api_dashboard(username: str = Depends(check_admin_credentials)):
+    async with AsyncSessionLocal() as session:
+        # Asosiy statistikalar
+        total_users = await get_user_count(session)
+        new_users_today = await get_new_users_today(session)
+        today_videos = await get_today_video_count(session)
+        today_rev = await get_today_revenue(session)  # so'mda
+        
+        # Jami tushum so'mda
+        result_total_payments = await session.execute(
+            select(Payment).where(Payment.status == "confirmed")
+        )
+        payments_confirmed = result_total_payments.scalars().all()
+        total_revenue = sum(package_price_som(p.package or "") for p in payments_confirmed)
+        
+        # Jami muvaffaqiyatli videolar
+        result_total_videos = await session.execute(
+            select(func.count(VideoGeneration.id)).where(VideoGeneration.status == "done")
+        )
+        total_videos = result_total_videos.scalar() or 0
+
+        # Oxirgi 10 foydalanuvchi
+        result_recent_users = await session.execute(
+            select(User).order_by(desc(User.created_at)).limit(10)
+        )
+        recent_users = result_recent_users.scalars().all()
+        recent_users_list = [{
+            "id": u.id,
+            "username": u.username,
+            "full_name": u.full_name,
+            "language": u.language,
+            "tangas": u.tangas,
+            "total_videos": u.total_videos,
+            "created_at": u.created_at.strftime('%Y-%m-%d %H:%M') if u.created_at else None
+        } for u in recent_users]
+
+        # Oxirgi 5 ta to'lov
+        result_recent_payments = await session.execute(
+            select(Payment).order_by(desc(Payment.created_at)).limit(5)
+        )
+        recent_payments = result_recent_payments.scalars().all()
+        recent_payments_list = [{
+            "id": p.id,
+            "user_id": p.user_id,
+            "amount_tangas": p.amount_tangas,
+            "provider": p.provider,
+            "status": p.status,
+            "created_at": p.created_at.strftime('%Y-%m-%d %H:%M') if p.created_at else None
+        } for p in recent_payments]
+        
+        # Oxirgi 5 ta video yaratish
+        result_recent_gens = await session.execute(
+            select(VideoGeneration).order_by(desc(VideoGeneration.created_at)).limit(5)
+        )
+        recent_gens = result_recent_gens.scalars().all()
+        recent_gens_list = [{
+            "id": g.id,
+            "user_id": g.user_id,
+            "prompt": g.prompt,
+            "status": g.status,
+            "api_provider": g.api_job_id,
+            "created_at": g.created_at.strftime('%Y-%m-%d %H:%M') if g.created_at else None
+        } for g in recent_gens]
+
+    return {
+        "stats": {
+            "total_users": total_users,
+            "new_users_today": new_users_today,
+            "today_videos": today_videos,
+            "today_revenue": today_rev,
+            "total_revenue": total_revenue,
+            "total_videos": total_videos,
+            "bot_running": is_bot_running,
+            "maintenance_mode": settings.is_maintenance
+        },
+        "recent_users": recent_users_list,
+        "recent_payments": recent_payments_list,
+        "recent_gens": recent_gens_list
+    }
+
+
+@app.post("/api/adjust-balance")
+async def api_adjust_balance(
+    request: Request,
+    username: str = Depends(check_admin_credentials)
+):
+    try:
+        data = await request.json()
+        user_id = data.get("user_id")
+        amount = data.get("amount")
+        if not user_id or amount is None:
+            raise HTTPException(status_code=400, detail="Foydalanuvchi ID yoki miqdor kiritilmagan")
+        
+        async with AsyncSessionLocal() as session:
+            result = await session.execute(select(User).where(User.id == int(user_id)))
+            user = result.scalar_one_or_none()
+            if not user:
+                raise HTTPException(status_code=404, detail="Foydalanuvchi topilmadi")
+            
+            user.tangas += int(amount)
+            if user.tangas < 0:
+                user.tangas = 0
+                
+            await session.commit()
+            return {"status": "success", "new_balance": user.tangas}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
