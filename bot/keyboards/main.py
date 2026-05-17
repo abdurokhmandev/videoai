@@ -34,6 +34,15 @@ def back_button(lang: str = "uz") -> InlineKeyboardMarkup:
     ])
 
 
+def language_select_keyboard() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="🇺🇿 O'zbekcha", callback_data="set_lang_uz"),
+            InlineKeyboardButton(text="🇷🇺 Русский", callback_data="set_lang_ru"),
+        ],
+    ])
+
+
 def settings_keyboard(lang: str = "uz") -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
         [

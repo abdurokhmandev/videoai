@@ -8,7 +8,7 @@ from bot.database.queries import (
     get_or_create_user, add_balance, mark_free_used, 
     AsyncSessionLocal, set_language
 )
-from bot.keyboards.main import main_keyboard, settings_keyboard
+from bot.keyboards.main import main_keyboard, settings_keyboard, language_select_keyboard
 
 router = Router()
 
@@ -28,14 +28,14 @@ async def start_handler(message: Message):
             await add_balance(session, user.id, settings.FREE_VIDEO_VALUE_SOM)
             await mark_free_used(session, user.id)
             
-            # Yangi foydalanuvchiga til tanlash tugmalarini chiqarish (Professional yondashuv)
+            # Yangi foydalanuvchiga til tanlash tugmalarini chiqarish (Orqaga tugmasiz)
             text = (
                 "🇺🇿 <b>Salom! Loyihamizga xush kelibsiz!</b>\n"
                 "Iltimos, muloqot tilini tanlang 👇\n\n"
                 "🇷🇺 <b>Привет! Добро пожаловать!</b>\n"
                 "Пожалуйста, выберите язык общения 👇"
             )
-            await message.answer(text, reply_markup=settings_keyboard(user.language))
+            await message.answer(text, reply_markup=language_select_keyboard())
         else:
             # Mavjud foydalanuvchiga to'g'ridan-to'g'ri chiroyli Bosh Menyuni chiqarish
             text = get_msg(user.language, "start_existing")

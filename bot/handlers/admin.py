@@ -5,9 +5,12 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 
+from sqlalchemy import select, func, desc
+from bot.database.models import User, VideoGeneration
 from bot.database.queries import (
     get_or_create_user, get_user_count, get_new_users_today,
-    get_today_video_count, get_today_revenue, get_all_users, AsyncSessionLocal
+    get_today_video_count, get_today_revenue, get_all_users, AsyncSessionLocal,
+    get_active_users, get_recent_payments, get_top_users
 )
 from bot.utils.messages import get_msg
 from bot.keyboards.payment import admin_keyboard
@@ -152,3 +155,128 @@ async def admin_broadcast_send(callback: CallbackQuery, state: FSMContext):
         )
         await callback.message.answer(done_text, reply_markup=back_button(user.language))
         await callback.answer("Broadcast yakunlandi!")
+
+
+@router.callback_query(F.data == "admin_users")
+async def admin_users_callback(callback: CallbackQuery):
+    if not is_admin(callback.from_user.id):
+        await callback.answer("Ruxsat yo'q!", show_alert=True)
+        return
+        
+    async with AsyncSessionLocal() as session:
+        user, _ = await get_or_create_user(session, callback.from_user.id, None, None)
+        
+        # Foydalanuvchilar statistikasi
+        total_u = await get_user_count(session)
+        active_u = len(await get_active_users(session, days=30))
+        
+        # Blocked count
+        blocked_res = await session.execute(select(func.count(User.id)).where(User.is_blocked == True))
+        blocked_count = blocked_res.scalar_one()
+        
+        text = (
+            "👥 <b>FOYDALANUVCHILAR STATISTIKASI</b>\n\n"
+            f"📊 Jami foydalanuvchilar: <b>{total_u} ta</b>\n"
+            f"⚡ Faol foydalanuvchilar (30 kun): <b>{active_u} ta</b>\n"
+            f"🚫 Bloklanganlar: <b>{blocked_count} ta</b>\n"
+        )
+        
+        try:
+            await callback.message.edit_text(text, reply_markup=admin_keyboard())
+        except TelegramBadRequest as e:
+            if "message is not modified" not in str(e):
+                raise
+        await callback.answer()
+
+
+@router.callback_query(F.data == "admin_payments")
+async def admin_payments_callback(callback: CallbackQuery):
+    if not is_admin(callback.from_user.id):
+        await callback.answer("Ruxsat yo'q!", show_alert=True)
+        return
+        
+    async with AsyncSessionLocal() as session:
+        user, _ = await get_or_create_user(session, callback.from_user.id, None, None)
+        
+        # Oxirgi 10 ta to'lov
+        recent_p = await get_recent_payments(session, limit=10)
+        
+        text = "💰 <b>OXIRGI TRANZAKSIYALAR (MAX 10 TA)</b>\n\n"
+        if not recent_p:
+            text += "Hozircha hech qanday tranzaksiyalar yo'q."
+        else:
+            from bot.utils.helpers import status_emoji
+            for i, p in enumerate(recent_p, 1):
+                emoji = status_emoji(p.status)
+                date_str = p.created_at.strftime("%d.%m %H:%M")
+                text += f"{i}. <code>ID:{p.id}</code> | <b>{p.amount:,} so'm</b> | {p.provider.upper()} | {p.package} | {emoji} | {date_str}\n"
+                
+        try:
+            await callback.message.edit_text(text, reply_markup=admin_keyboard())
+        except TelegramBadRequest as e:
+            if "message is not modified" not in str(e):
+                raise
+        await callback.answer()
+
+
+@router.callback_query(F.data == "admin_videos")
+async def admin_videos_callback(callback: CallbackQuery):
+    if not is_admin(callback.from_user.id):
+        await callback.answer("Ruxsat yo'q!", show_alert=True)
+        return
+        
+    async with AsyncSessionLocal() as session:
+        user, _ = await get_or_create_user(session, callback.from_user.id, None, None)
+        
+        # Oxirgi 10 ta generatsiya
+        from bot.utils.helpers import truncate_text, status_emoji
+        
+        res = await session.execute(
+            select(VideoGeneration).order_by(desc(VideoGeneration.created_at)).limit(10)
+        )
+        recent_g = list(res.scalars().all())
+        
+        text = "🎬 <b>OXIRGI VIDEOLAR (MAX 10 TA)</b>\n\n"
+        if not recent_g:
+            text += "Hozircha hech qanday videolar yaratilmagan."
+        else:
+            for i, g in enumerate(recent_g, 1):
+                emoji = status_emoji(g.status)
+                date_str = g.created_at.strftime("%d.%m %H:%M")
+                prompt_t = truncate_text(g.prompt, max_len=30)
+                text += f"{i}. <code>U:{g.user_id}</code> | \"{prompt_t}\" | {g.api_provider} | {emoji} | {date_str}\n"
+                
+        try:
+            await callback.message.edit_text(text, reply_markup=admin_keyboard())
+        except TelegramBadRequest as e:
+            if "message is not modified" not in str(e):
+                raise
+        await callback.answer()
+
+
+@router.callback_query(F.data == "admin_top")
+async def admin_top_callback(callback: CallbackQuery):
+    if not is_admin(callback.from_user.id):
+        await callback.answer("Ruxsat yo'q!", show_alert=True)
+        return
+        
+    async with AsyncSessionLocal() as session:
+        user, _ = await get_or_create_user(session, callback.from_user.id, None, None)
+        
+        # Top 10 foydalanuvchi
+        top_u = await get_top_users(session, limit=10)
+        
+        text = "🏆 <b>TOP 10 FOYDALANUVCHILAR</b>\n\n"
+        if not top_u:
+            text += "Hozircha ma'lumot yo'q."
+        else:
+            for i, u in enumerate(top_u, 1):
+                username_str = f"@{u.username}" if u.username else "no_username"
+                text += f"{i}. <code>{u.id}</code> | <b>{u.full_name or 'Ismsiz'}</b> ({username_str}) | Jami: <b>{u.total_spent:,} so'm</b> ({u.total_videos} ta video)\n"
+                
+        try:
+            await callback.message.edit_text(text, reply_markup=admin_keyboard())
+        except TelegramBadRequest as e:
+            if "message is not modified" not in str(e):
+                raise
+        await callback.answer()
