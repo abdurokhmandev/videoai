@@ -79,18 +79,10 @@
                     <i class="fa-solid fa-shield-halved text-2xl text-white"></i>
                 </div>
                 <h2 class="text-2xl font-extrabold tracking-tight text-white">CRM Tizimiga Kirish</h2>
-                <p class="text-gray-400 text-sm">Railway Backend ma'lumotlarini to'ldiring</p>
+                <p class="text-gray-400 text-sm">Admin login va parolini kiriting</p>
             </div>
             
             <div class="space-y-4">
-                <div>
-                    <label class="block text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">Backend API URL</label>
-                    <div class="relative">
-                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500"><i class="fa-solid fa-link"></i></span>
-                        <input id="login-url" type="url" placeholder="https://example.up.railway.app" class="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-900/60 border border-gray-800 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 focus:outline-none text-white placeholder-gray-600 transition">
-                    </div>
-                </div>
-                
                 <div>
                     <label class="block text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">Admin Username</label>
                     <div class="relative">
@@ -358,45 +350,35 @@
 
     <!-- JS Logic -->
     <script>
-        let backendUrl = '';
+        let backendUrl = 'https://videoai-production-736c.up.railway.app';
         let authHeader = '';
         let myChart = null;
 
         // Check credentials on load
         window.addEventListener('load', () => {
-            const savedUrl = localStorage.getItem('vercel_backend_url');
             const savedAuth = localStorage.getItem('vercel_auth_header');
             
-            if (!savedUrl || !savedAuth) {
+            if (!savedAuth) {
                 document.getElementById('login-modal').classList.remove('hidden');
             } else {
-                backendUrl = savedUrl;
                 authHeader = savedAuth;
                 loadDashboardData();
             }
         });
 
         function saveCredentials() {
-            let url = document.getElementById('login-url').value.trim();
             const user = document.getElementById('login-user').value.trim();
             const pass = document.getElementById('login-pass').value.trim();
 
-            if (!url || !user || !pass) {
+            if (!user || !pass) {
                 alert("Iltimos, barcha maydonlarni to'ldiring!");
                 return;
             }
 
-            // Remove trailing slash if exists
-            if (url.endsWith('/')) {
-                url = url.slice(0, -1);
-            }
-
             const header = 'Basic ' + btoa(user + ':' + pass);
             
-            localStorage.setItem('vercel_backend_url', url);
             localStorage.setItem('vercel_auth_header', header);
 
-            backendUrl = url;
             authHeader = header;
 
             document.getElementById('login-modal').classList.add('hidden');
@@ -404,7 +386,6 @@
         }
 
         function logout() {
-            localStorage.removeItem('vercel_backend_url');
             localStorage.removeItem('vercel_auth_header');
             location.reload();
         }

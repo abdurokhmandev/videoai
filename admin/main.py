@@ -168,9 +168,9 @@ async def admin_dashboard(
         recent_gens = result_recent_gens.scalars().all()
 
     return templates.TemplateResponse(
-        "dashboard.html",
-        {
-            "request": request,
+        request=request,
+        name="dashboard.html",
+        context={
             "username": username,
             "total_users": total_users,
             "new_users_today": new_users_today,
