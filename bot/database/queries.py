@@ -55,6 +55,12 @@ async def init_db():
             await conn.execute(text("ALTER TABLE payments ADD COLUMN IF NOT EXISTS amount_tangas INTEGER DEFAULT 0"))
             await conn.execute(text("ALTER TABLE payments ADD COLUMN IF NOT EXISTS package VARCHAR"))
             await conn.execute(text("ALTER TABLE payments ADD COLUMN IF NOT EXISTS provider_tx_id VARCHAR"))
+            await conn.execute(text("ALTER TABLE payments ADD COLUMN IF NOT EXISTS admin_confirmed BOOLEAN DEFAULT FALSE"))
+            
+            # video_generations jadvali migratsiyasi
+            await conn.execute(text("ALTER TABLE video_generations ADD COLUMN IF NOT EXISTS cost_tangas INTEGER DEFAULT 30"))
+            await conn.execute(text("ALTER TABLE video_generations ADD COLUMN IF NOT EXISTS duration_sec INTEGER DEFAULT 5"))
+            await conn.execute(text("ALTER TABLE video_generations ADD COLUMN IF NOT EXISTS completed_at TIMESTAMP"))
             
             # Eski foydalanuvchilarga referral_code o'rnatish
             await conn.execute(text("UPDATE users SET referral_code = substr(md5(random()::text), 1, 8) WHERE referral_code IS NULL"))
