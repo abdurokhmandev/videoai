@@ -30,6 +30,7 @@ class User(Base):
     referral_code: Mapped[Optional[str]] = mapped_column(String(20), unique=True)
     referred_by: Mapped[Optional[int]] = mapped_column(BigInteger, ForeignKey("users.id"), nullable=True)
     is_blocked: Mapped[bool] = mapped_column(Boolean, default=False)
+    free_used: Mapped[bool] = mapped_column(Boolean, default=False)  # Welcome bonus olganmi?
     created_at: Mapped[datetime] = mapped_column(TIMESTAMP, default=func.now())
     last_active: Mapped[datetime] = mapped_column(TIMESTAMP, default=func.now(), onupdate=func.now())
 

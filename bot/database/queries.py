@@ -50,6 +50,7 @@ async def init_db():
             await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS premium_until TIMESTAMP"))
             await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS referral_code VARCHAR(12)"))
             await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS referred_by BIGINT"))
+            await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS free_used BOOLEAN DEFAULT FALSE"))
             
             # payments jadvali migratsiyasi
             await conn.execute(text("ALTER TABLE payments ADD COLUMN IF NOT EXISTS amount_tangas INTEGER DEFAULT 0"))
