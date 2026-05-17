@@ -1,346 +1,231 @@
 """
-Barcha xabar matnlari — O'zbek va Rus tillarida
+Barcha xabar matnlari — O'zbek tili (tanga iqtisodiyoti asosida)
 """
 
 MESSAGES = {
     "uz": {
         "start": (
-            "🎬 <b>AI Video Bot</b> ga xush kelibsiz!\n\n"
-            "Siz matn yozing — biz <b>8 soniyalik professional video</b> yasaymiz.\n\n"
-            "━━━━━━━━━━━━━━━━━━━━\n"
-            "🎁 <b>SIZGA SOVG'A: 1 ta BEPUL video!</b>\n"
-            "━━━━━━━━━━━━━━━━━━━━\n\n"
+            "🎬 <b>AI Videochi</b> ga xush kelibsiz!\n\n"
+            "Matn yozing — biz professional video yasaymiz!\n\n"
+            "━━━━━━━━━━━━━━━━━━━━━━\n"
+            "🎁 <b>SIZGA SOVG'A!</b>\n"
+            "━━━━━━━━━━━━━━━━━━━━━━\n"
+            "🪙 <b>50 tanga</b> berildi!\n"
+            "▶️ Bitta tekin video yasang!\n\n"
             "Qanday ishlaydi?\n"
-            "1️⃣ /video yozing yoki tugmani bosing\n"
-            "2️⃣ Videongiz haqida yozing (o'zbek yoki ingliz)\n"
-            "3️⃣ 30-60 soniyada tayyor video qo'lingizda!\n\n"
-            "📊 Narxlar: 3 video = 15,000 so'm dan\n\n"
-            "👇 Boshlaylik!"
+            "1️⃣ <b>\"🎬 Video yaratish\"</b> tugmasini bosing\n"
+            "2️⃣ Videongizni tasvirlab yozing\n"
+            "3️⃣ 30-60 soniyada tayyor! 🚀\n"
+            "━━━━━━━━━━━━━━━━━━━━━━"
         ),
-        "start_existing": (
-            "🎬 <b>AI Video Bot</b>\n\n"
-            "Xush kelibsiz! Quyidagi tugmalardan birini tanlang 👇"
-        ),
-        "select_model": (
-            "🎬 <b>Qanday video kerak?</b>\n\n"
+        "main_menu": (
+            "🎬 <b>AI Videochi</b>\n\n"
             "━━━━━━━━━━━━━━━━━━━━\n"
-            "⚡ <b>Tez va arzon</b>\n"
-            "   Sifat: ⭐⭐⭐⭐\n"
-            "   Narx: {fast_price:,} so'm/video\n"
-            "   Vaqt: ~30 soniya\n\n"
-            "🏆 <b>Premium sifat</b>\n"
-            "   Sifat: ⭐⭐⭐⭐⭐\n"
-            "   Narx: {premium_price:,} so'm/video\n"
-            "   Vaqt: ~60 soniya\n"
+            "🪙 Tangalar: <b>{tangas} ta</b>\n"
+            "🎬 Jami videolar: <b>{total_videos} ta</b>\n"
+            "🔥 Streak: <b>{streak} kun</b>\n"
             "━━━━━━━━━━━━━━━━━━━━"
         ),
         "enter_prompt": (
-            "✍️ <b>Videongizni tasvirlab bering:</b>\n\n"
-            "Misol promtlar:\n"
-            '- "Tog\'lar orasida quyosh botayotgan manzara, epik musiqa"\n'
-            '- "Futuristik shahar, neon chiroqlar, yomg\'ir, kecha"\n'
-            '- "Dengiz bo\'yi, to\'lqinlar, palma daraxti, sokin"\n\n'
-            "💡 <b>Maslahat:</b> Qancha batafsil yozsangiz, shuncha yaxshi!\n\n"
-            "⌨️ Yozing:"
+            "🎬 <b>Video yaratish</b>\n\n"
+            "✍️ Videongizni tasvirlab bering:\n\n"
+            "<b>Misollar:</b>\n"
+            "• <i>\"Tog'lar orasida quyosh botayotgan manzara\"</i>\n"
+            "• <i>\"Futuristik shahar, neon chiroqlar, yomg'ir\"</i>\n"
+            "• <i>\"Dengiz bo'yi, to'lqinlar, palma daraxti\"</i>\n\n"
+            "💡 Batafsil yozsangiz — yaxshiroq natija!\n\n"
+            "🪙 Narx: <b>30 tanga</b> | Sizda: <b>{balance} tanga</b>"
         ),
         "confirm_video": (
-            "🎬 <b>Video yaratish</b>\n\n"
-            "📝 Prompt: {prompt}\n"
-            "⚡ Model: {model_name}\n"
-            "💰 Narx: {cost:,} so'm\n"
-            "💳 Balansingiz: {balance:,} so'm → {new_balance:,} so'm\n\n"
-            "━━━━━━━━━━━━━━━━━━━━\n"
-            "Davom etasizmi?"
+            "🎬 <b>Video yaratilsinmi?</b>\n\n"
+            "📝 <i>\"{prompt}\"</i>\n"
+            "🪙 <b>30 tanga</b> yechildi: <b>{balance} → {new_balance} tanga</b>\n\n"
+            "━━━━━━━━━━━━━━━━━━━━"
         ),
         "generation_started": (
             "⏳ <b>Video yaratilmoqda...</b>\n\n"
-            "🎬 Taxminiy vaqt: {time} soniya\n"
-            "Iltimos kuting..."
+            "⏱ Taxminan {time} soniya qoldi"
         ),
-        "generation_progress": "⏳ Video yaratilmoqda...\n\n🎬 [{bar}] {percent}%\n\nTaxminiy vaqt: ~{remaining} soniya\nIltimos kuting...",
+        "generation_progress": (
+            "⏳ <b>Video yaratilmoqda...</b>\n\n"
+            "[{bar}] {percent}%\n\n"
+            "⏱ Taxminan <b>{remaining} soniya</b> qoldi"
+        ),
         "generation_done": (
-            "✅ <b>Videongiz tayyor!</b>\n\n"
-            "📝 Prompt: \"{prompt}\"\n"
-            "⏱ Yaratish vaqti: {duration} soniya\n"
-            "💰 Yechildi: {cost:,} so'm\n"
-            "💳 Qoldiq balans: {balance:,} so'm\n\n"
-            "━━━━━━━━━━━━━━━━━━━━\n"
-            "👇 Video quyida:"
-        ),
-        "generation_failed": (
-            "❌ <b>Xato yuz berdi!</b>\n"
-            "💰 {cost:,} so'm qaytarildi\n\n"
-            "Qaytadan urinib ko'ring 🔄"
-        ),
-        "balance_info": (
-            "💳 <b>HISOBINGIZ</b>\n\n"
-            "━━━━━━━━━━━━━━━━━━━━\n"
-            "💰 Joriy balans:  {balance:,} so'm\n"
-            "🎬 Jami videolar: {total_videos} ta\n"
-            "💸 Jami sarflagan: {total_spent:,} so'm\n"
-            "━━━━━━━━━━━━━━━━━━━━\n"
-            "📅 Ro'yxatdan: {created}\n"
-            "🏆 Status: {status}"
+            "✅ <b>Video tayyor!</b>\n\n"
+            "📝 <i>\"{prompt}\"</i>\n"
+            "⏱ Yaratish vaqti: <b>{duration} soniya</b>\n"
+            "🪙 Qoldiq: <b>{balance} tanga</b>\n\n"
+            "👇"
         ),
         "balance_low": (
-            "❌ <b>Balans yetarli emas!</b>\n"
-            "💰 Kerak: {needed:,} so'm\n"
-            "💳 Sizda: {balance:,} so'm\n\n"
-            "Balansni to'ldiring 👇"
+            "🪙 <b>Tanga yetarli emas!</b>\n\n"
+            "Kerak: <b>30 tanga</b>\n"
+            "Sizda: <b>{balance} tanga</b>\n"
+            "Yetishmaydi: <b>{needed} tanga</b>\n\n"
+            "━━━━━━━━━━━━━━━━━━━━"
         ),
         "topup_menu": (
-            "💰 <b>Balans to'ldirish</b>\n\n"
-            "💳 Joriy balans: {balance:,} so'm\n\n"
+            "🪙 <b>Tanga olish</b>\n\n"
             "━━━━━━━━━━━━━━━━━━━━\n"
-            "📦 <b>PAKETLAR:</b>\n"
+            "🪙 Joriy tangalar: <b>{balance} ta</b>\n"
+            "━━━━━━━━━━━━━━━━━━━━\n\n"
+            "📦 <b>PAKETLAR:</b>"
+        ),
+        "topup_details": (
+            "📦 <b>{package_name} — {tangas} tanga</b>\n\n"
+            "To'lov usulini tanlang:"
+        ),
+        "stars_payment": (
+            "⭐ <b>Telegram Stars orqali to'lov</b>\n\n"
+            "{tangas} tanga uchun: <b>{stars} ⭐</b>\n\n"
+            "👇 To'lash uchun bosing:"
+        ),
+        "manual_payment": (
+            "💳 <b>Karta orqali to'lov</b>\n\n"
+            "{tangas} tanga uchun: <b>{som:,} so'm</b>\n\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            "Quyidagi karta raqamiga o'tkazing:\n"
+            "<code>{card_number}</code> (Humo)\n"
+            "Ega: <b>{card_owner}</b>\n\n"
+            "📸 O'tkazmadan keyin chekni (rasmini) yuboring\n"
+            "⏰ 5-30 daqiqa ichida tangalar beriladi\n"
             "━━━━━━━━━━━━━━━━━━━━"
-        ),
-        "select_payment": (
-            "💳 <b>To'lov usulini tanlang:</b>\n\n"
-            "📦 {package_name} — {price:,} so'm ({videos} video)"
-        ),
-        "payment_link": (
-            "🔗 <b>To'lov havolasi:</b>\n"
-            "{link}\n\n"
-            "⏰ Havola 30 daqiqa davomida faol\n\n"
-            "To'lov amalga oshgandan so'ng balans\n"
-            "avtomatik ravishda to'ldiriladi ✅"
-        ),
-        "payment_confirmed": (
-            "✅ <b>To'lov qabul qilindi!</b>\n"
-            "💰 +{amount:,} so'm\n"
-            "💳 Yangi balans: {balance:,} so'm\n\n"
-            "🎬 /video — video yaratishni boshlang!"
         ),
         "referral_info": (
-            "🔗 <b>DO'ST TAKLIF QILING!</b>\n\n"
-            "Har bir do'st taklif qilsangiz:\n"
-            "  ✅ Siz: +1 bepul video ({bonus:,} so'm qiymat)\n"
-            "  ✅ Do'stingiz: +1 bepul video\n\n"
+            "👥 <b>DO'ST TAKLIF QILING!</b>\n\n"
+            "Har bir do'st uchun:\n"
+            "✅ Siz: <b>+20 🪙 tanga</b>\n"
+            "✅ Do'stingiz: <b>+20 🪙 tanga (qo'shimcha)</b>\n\n"
             "━━━━━━━━━━━━━━━━━━━━\n"
-            "🔗 <b>Sizning havolangiz:</b>\n"
+            "🔗 Sizning havolangiz:\n"
             "<code>t.me/{bot_username}?start=REF_{ref_code}</code>\n\n"
             "📊 <b>Statistika:</b>\n"
-            "👥 Taklif qilganlar: {total_referred} kishi\n"
-            "🎬 Bonus videolar: {bonuses} ta\n"
-            "💰 Tejagan: {saved:,} so'm\n"
+            "👥 Taklif qilganlar: <b>{total_referred} kishi</b>\n"
+            "🪙 Bonus tangalar: <b>{bonuses} ta</b>\n"
             "━━━━━━━━━━━━━━━━━━━━"
         ),
-        "referral_bonus": (
-            "🎁 <b>Bonus!</b>\n"
-            "{name} sizning havolangiz orqali qo'shildi!\n"
-            "💰 +{bonus:,} so'm (1 bepul video)"
+        "balance_info": (
+            "🪙 <b>TANGALARINGIZ</b>\n\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            "🪙 Joriy tangalar: <b>{balance} ta</b>\n"
+            "🎬 Jami videolar: <b>{total_videos} ta</b>\n"
+            "🔥 Streak: <b>{streak} kun</b>\n"
+            "📅 Ro'yxatdan: <b>{created}</b>\n"
+            "━━━━━━━━━━━━━━━━━━━━"
         ),
-        "history_header": "📋 <b>SIZNING VIDEOLARINGIZ</b>\n\n━━━━━━━━━━━━━━━━━━━━",
-        "history_item": (
-            "\n{num}️⃣ {date}\n"
-            '   📝 "{prompt}"\n'
-            "   {model} | {status} | {cost:,} so'm"
-        ),
-        "history_empty": "📋 Sizda hali videolar yo'q.\n\n🎬 /video — birinchi videongizni yarating!",
-        "help": (
-            "❓ <b>YORDAM</b>\n\n"
-            "🎬 <b>Video yaratish:</b>\n"
-            "/video — AI video generatsiya qilish\n\n"
-            "💰 <b>To'lov:</b>\n"
-            "/topup — Balans to'ldirish\n"
-            "/balance — Balansni ko'rish\n\n"
-            "📋 <b>Boshqa:</b>\n"
-            "/history — Video tarixingiz\n"
-            "/referral — Do'st taklif qilish\n"
-            "/settings — Sozlamalar\n"
-            "/help — Shu yordam\n\n"
-            "📞 <b>Muammo bo'lsa:</b> @admin_username"
-        ),
-        "settings": (
-            "⚙️ <b>SOZLAMALAR</b>\n\n"
-            "🌐 Til: {lang}\n"
+        "premium_info": (
+            "🏆 <b>PREMIUM OBUNA</b>\n\n"
+            "Premium bilan nimalar bo'ladi?\n"
+            "✅ Har kuni +5 tanga sovg'a\n"
+            "✅ Videolar 2x tezroq\n"
+            "✅ Watermark yo'q\n"
+            "✅ Priority navbat\n\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            "📦 Oylik: <b>500 🪙 tanga</b>\n"
+            "━━━━━━━━━━━━━━━━━━━━"
         ),
         "nsfw_blocked": "🚫 Bu turdagi kontent taqiqlangan. Iltimos, boshqa prompt kiriting.",
-        "rate_limited": "⏳ Iltimos, biroz kuting. Juda ko'p so'rov yubordingiz.",
         "user_blocked": "🚫 Sizning hisobingiz bloklangan. Admin bilan bog'laning.",
-        "error_generic": "❌ Xatolik yuz berdi. Iltimos qaytadan urinib ko'ring.",
         "admin_only": "🚫 Bu buyruq faqat adminlar uchun.",
-        "admin_panel": (
-            "👑 <b>ADMIN PANEL</b>\n\n"
-            "━━━━━━━━━━━━━━━━━━━━\n"
-            "📊 <b>Bugungi statistika:</b>\n"
-            "👥 Jami userlar: {total_users}\n"
-            "🆕 Bugun yangilar: {new_today}\n"
-            "🎬 Bugun videolar: {videos_today}\n"
-            "💰 Bugun daromad: {revenue_today:,} so'm\n"
-            "━━━━━━━━━━━━━━━━━━━━"
-        ),
-        "broadcast_ask": "📢 <b>Broadcast xabar yozing:</b>\n\nBarcha foydalanuvchilarga yuboriladi.",
-        "broadcast_confirm": "📢 Bu xabarni {count} foydalanuvchiga yuborasizmi?\n\n{text}",
-        "broadcast_done": "✅ Xabar {sent}/{total} foydalanuvchiga yuborildi.",
     },
     "ru": {
         "start": (
-            "🎬 Добро пожаловать в <b>AI Video Bot</b>!\n\n"
-            "Вы пишете текст — мы создаём <b>8-секундное профессиональное видео</b>.\n\n"
-            "━━━━━━━━━━━━━━━━━━━━\n"
-            "🎁 <b>ПОДАРОК: 1 БЕСПЛАТНОЕ видео!</b>\n"
-            "━━━━━━━━━━━━━━━━━━━━\n\n"
+            "🎬 Добро пожаловать в <b>AI Videochi</b>!\n\n"
+            "Вы пишете текст — мы создаём профессиональное видео!\n\n"
+            "━━━━━━━━━━━━━━━━━━━━━━\n"
+            "🎁 <b>ПОДАРОК!</b>\n"
+            "━━━━━━━━━━━━━━━━━━━━━━\n"
+            "🪙 Вам начислено <b>50 монет</b>!\n"
+            "▶️ Создайте одно бесплатное видео!\n\n"
             "Как это работает?\n"
-            "1️⃣ Напишите /video или нажмите кнопку\n"
-            "2️⃣ Опишите своё видео\n"
-            "3️⃣ Через 30-60 секунд видео готово!\n\n"
-            "📊 Цены: 3 видео от 15,000 сум\n\n"
-            "👇 Начнём!"
+            "1️⃣ Нажмите <b>\"🎬 Создать видео\"</b>\n"
+            "2️⃣ Опишите ваше видео\n"
+            "3️⃣ Готово за 30-60 секунд! 🚀\n"
+            "━━━━━━━━━━━━━━━━━━━━━━"
         ),
-        "start_existing": (
-            "🎬 <b>AI Video Bot</b>\n\n"
-            "Добро пожаловать! Выберите действие 👇"
-        ),
-        "select_model": (
-            "🎬 <b>Какое видео нужно?</b>\n\n"
+        "main_menu": (
+            "🎬 <b>AI Videochi</b>\n\n"
             "━━━━━━━━━━━━━━━━━━━━\n"
-            "⚡ <b>Быстрое и доступное</b>\n"
-            "   Качество: ⭐⭐⭐⭐\n"
-            "   Цена: {fast_price:,} сум/видео\n"
-            "   Время: ~30 секунд\n\n"
-            "🏆 <b>Премиум качество</b>\n"
-            "   Качество: ⭐⭐⭐⭐⭐\n"
-            "   Цена: {premium_price:,} сум/видео\n"
-            "   Время: ~60 секунд\n"
+            "🪙 Монеты: <b>{tangas} шт</b>\n"
+            "🎬 Всего видео: <b>{total_videos} шт</b>\n"
+            "🔥 Серия: <b>{streak} дней</b>\n"
             "━━━━━━━━━━━━━━━━━━━━"
         ),
         "enter_prompt": (
-            "✍️ <b>Опишите ваше видео:</b>\n\n"
-            "Примеры:\n"
-            '- "Закат в горах, эпическая музыка"\n'
-            '- "Футуристический город, неоновые огни, дождь, ночь"\n\n'
-            "💡 <b>Совет:</b> Чем подробнее — тем лучше!\n\n"
-            "⌨️ Пишите:"
+            "🎬 <b>Создание видео</b>\n\n"
+            "✍️ Опишите ваше видео:\n\n"
+            "🪙 Цена: <b>30 монет</b> | У вас: <b>{balance} монет</b>"
         ),
         "confirm_video": (
-            "🎬 <b>Создать видео</b>\n\n"
-            "📝 Промпт: {prompt}\n"
-            "⚡ Модель: {model_name}\n"
-            "💰 Цена: {cost:,} сум\n"
-            "💳 Баланс: {balance:,} сум → {new_balance:,} сум\n\n"
-            "━━━━━━━━━━━━━━━━━━━━\n"
-            "Продолжить?"
+            "🎬 <b>Создать видео?</b>\n\n"
+            "📝 <i>\"{prompt}\"</i>\n"
+            "🪙 Будет списано <b>30 монет</b>\n\n"
+            "━━━━━━━━━━━━━━━━━━━━"
         ),
         "generation_started": (
             "⏳ <b>Видео создаётся...</b>\n\n"
-            "🎬 Примерное время: {time} секунд\n"
-            "Пожалуйста, подождите..."
+            "⏱ Осталось примерно {time} секунд"
         ),
-        "generation_progress": "⏳ Видео создаётся...\n\n🎬 [{bar}] {percent}%\n\nПримерное время: ~{remaining} сек\nПожалуйста, подождите...",
+        "generation_progress": (
+            "⏳ <b>Видео создаётся...</b>\n\n"
+            "⏱ Осталось примерно <b>{remaining} секунд</b>"
+        ),
         "generation_done": (
-            "✅ <b>Ваше видео готово!</b>\n\n"
-            "📝 Промпт: \"{prompt}\"\n"
-            "⏱ Время создания: {duration} сек\n"
-            "💰 Списано: {cost:,} сум\n"
-            "💳 Остаток: {balance:,} сум\n\n"
-            "━━━━━━━━━━━━━━━━━━━━\n"
-            "👇 Видео ниже:"
-        ),
-        "generation_failed": (
-            "❌ <b>Произошла ошибка!</b>\n"
-            "💰 {cost:,} сум возвращено\n\n"
-            "Попробуйте снова 🔄"
-        ),
-        "balance_info": (
-            "💳 <b>ВАШ СЧЁТ</b>\n\n"
-            "━━━━━━━━━━━━━━━━━━━━\n"
-            "💰 Баланс: {balance:,} сум\n"
-            "🎬 Всего видео: {total_videos}\n"
-            "💸 Всего потрачено: {total_spent:,} сум\n"
-            "━━━━━━━━━━━━━━━━━━━━"
+            "✅ <b>Видео готово!</b>\n\n"
+            "🪙 Остаток: <b>{balance} монет</b>\n\n"
+            "👇"
         ),
         "balance_low": (
-            "❌ <b>Недостаточно средств!</b>\n"
-            "💰 Нужно: {needed:,} сум\n"
-            "💳 У вас: {balance:,} сум\n\n"
-            "Пополните баланс 👇"
+            "🪙 <b>Недостаточно монет!</b>\n\n"
+            "Нужно: <b>30 монет</b>\n"
+            "У вас: <b>{balance} монет</b>\n\n"
+            "━━━━━━━━━━━━━━━━━━━━"
         ),
         "topup_menu": (
-            "💰 <b>Пополнение баланса</b>\n\n"
-            "💳 Текущий баланс: {balance:,} сум\n\n"
-            "━━━━━━━━━━━━━━━━━━━━\n"
-            "📦 <b>ПАКЕТЫ:</b>\n"
-            "━━━━━━━━━━━━━━━━━━━━"
+            "🪙 <b>Покупка монет</b>\n\n"
+            "🪙 Текущий баланс: <b>{balance} шт</b>\n\n"
+            "📦 <b>ПАКЕТЫ:</b>"
         ),
-        "select_payment": (
-            "💳 <b>Выберите способ оплаты:</b>\n\n"
-            "📦 {package_name} — {price:,} сум ({videos} видео)"
+        "topup_details": (
+            "📦 <b>{package_name} — {tangas} монет</b>\n\n"
+            "Выберите способ оплаты:"
         ),
-        "payment_link": (
-            "🔗 <b>Ссылка на оплату:</b>\n"
-            "{link}\n\n"
-            "⏰ Ссылка действительна 30 минут\n\n"
-            "После оплаты баланс\n"
-            "пополнится автоматически ✅"
+        "stars_payment": (
+            "⭐ <b>Оплата через Telegram Stars</b>\n\n"
+            "За {tangas} монет: <b>{stars} ⭐</b>"
         ),
-        "payment_confirmed": (
-            "✅ <b>Оплата принята!</b>\n"
-            "💰 +{amount:,} сум\n"
-            "💳 Новый баланс: {balance:,} сум\n\n"
-            "🎬 /video — начните создавать видео!"
+        "manual_payment": (
+            "💳 <b>Оплата на карту</b>\n\n"
+            "За {tangas} монет: <b>{som:,} сум</b>\n\n"
+            "Переведите на карту:\n"
+            "<code>{card_number}</code>\n"
+            "Владелец: <b>{card_owner}</b>\n\n"
+            "📸 Отправьте фото чека после перевода."
         ),
         "referral_info": (
-            "🔗 <b>ПРИГЛАСИТЕ ДРУГА!</b>\n\n"
+            "👥 <b>ПРИГЛАСИТЬ ДРУГА!</b>\n\n"
             "За каждого друга:\n"
-            "  ✅ Вам: +1 бесплатное видео ({bonus:,} сум)\n"
-            "  ✅ Другу: +1 бесплатное видео\n\n"
-            "━━━━━━━━━━━━━━━━━━━━\n"
-            "🔗 <b>Ваша ссылка:</b>\n"
-            "<code>t.me/{bot_username}?start=REF_{ref_code}</code>\n\n"
-            "📊 <b>Статистика:</b>\n"
-            "👥 Приглашённых: {total_referred}\n"
-            "🎬 Бонусных видео: {bonuses}\n"
-            "💰 Сэкономлено: {saved:,} сум\n"
-            "━━━━━━━━━━━━━━━━━━━━"
+            "✅ Вы: <b>+20 🪙 монет</b>\n"
+            "✅ Друг: <b>+20 🪙 монет</b>"
         ),
-        "referral_bonus": (
-            "🎁 <b>Бонус!</b>\n"
-            "{name} присоединился по вашей ссылке!\n"
-            "💰 +{bonus:,} сум (1 бесплатное видео)"
+        "balance_info": (
+            "🪙 <b>ВАШИ МОНЕТЫ</b>\n\n"
+            "🪙 Монеты: <b>{balance} шт</b>\n"
+            "🔥 Серия: <b>{streak} дней</b>"
         ),
-        "history_header": "📋 <b>ВАШИ ВИДЕО</b>\n\n━━━━━━━━━━━━━━━━━━━━",
-        "history_item": (
-            "\n{num}️⃣ {date}\n"
-            '   📝 "{prompt}"\n'
-            "   {model} | {status} | {cost:,} сум"
+        "premium_info": (
+            "🏆 <b>PREMIUM ПОДПИСКА</b>\n\n"
+            "Преимущества:\n"
+            "✅ +5 монет ежедневно\n"
+            "✅ Создание в 2 раза быстрее\n"
+            "✅ Без водяного знака\n\n"
+            "📦 Месяц: <b>500 🪙 монет</b>"
         ),
-        "history_empty": "📋 У вас пока нет видео.\n\n🎬 /video — создайте первое!",
-        "help": (
-            "❓ <b>ПОМОЩЬ</b>\n\n"
-            "🎬 <b>Создание видео:</b>\n"
-            "/video — Создать AI видео\n\n"
-            "💰 <b>Оплата:</b>\n"
-            "/topup — Пополнить баланс\n"
-            "/balance — Проверить баланс\n\n"
-            "📋 <b>Другое:</b>\n"
-            "/history — История видео\n"
-            "/referral — Пригласить друга\n"
-            "/settings — Настройки\n"
-            "/help — Эта справка\n\n"
-            "📞 <b>Проблемы?</b> @admin_username"
-        ),
-        "settings": "⚙️ <b>НАСТРОЙКИ</b>\n\n🌐 Язык: {lang}\n",
         "nsfw_blocked": "🚫 Такой контент запрещён. Введите другой промпт.",
-        "rate_limited": "⏳ Подождите немного. Слишком много запросов.",
-        "user_blocked": "🚫 Ваш аккаунт заблокирован. Обратитесь к администратору.",
-        "error_generic": "❌ Произошла ошибка. Попробуйте снова.",
-        "admin_only": "🚫 Эта команда только для админов.",
-        "admin_panel": (
-            "👑 <b>АДМИН ПАНЕЛЬ</b>\n\n"
-            "━━━━━━━━━━━━━━━━━━━━\n"
-            "📊 <b>Сегодня:</b>\n"
-            "👥 Всего: {total_users}\n"
-            "🆕 Новых: {new_today}\n"
-            "🎬 Видео: {videos_today}\n"
-            "💰 Доход: {revenue_today:,} сум\n"
-            "━━━━━━━━━━━━━━━━━━━━"
-        ),
-        "broadcast_ask": "📢 <b>Напишите сообщение:</b>\n\nОтправится всем пользователям.",
-        "broadcast_confirm": "📢 Отправить {count} пользователям?\n\n{text}",
-        "broadcast_done": "✅ Отправлено {sent}/{total} пользователям.",
-    },
+        "user_blocked": "🚫 Ваш аккаунт заблокирован.",
+        "admin_only": "🚫 Команда только для админов.",
+    }
 }
 
 

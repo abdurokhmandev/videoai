@@ -1,40 +1,41 @@
-"""Asosiy inline klaviaturalar"""
-
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 
 
-def main_keyboard(lang: str = "uz") -> InlineKeyboardMarkup:
-    if lang == "ru":
-        return InlineKeyboardMarkup(inline_keyboard=[
-            [
-                InlineKeyboardButton(text="🎬 Создать видео", callback_data="video_start"),
-                InlineKeyboardButton(text="💰 Пополнить", callback_data="topup"),
-            ],
-            [
-                InlineKeyboardButton(text="📋 Пакеты", callback_data="topup"),
-                InlineKeyboardButton(text="🔗 Пригласить", callback_data="referral"),
-            ],
-        ])
+def main_reply_keyboard() -> ReplyKeyboardMarkup:
+    """Asosiy pastki menyu (Reply keyboard)"""
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text="🎬 Video yaratish")],
+            [KeyboardButton(text="🪙 Balans"), KeyboardButton(text="📋 Tarix")],
+            [KeyboardButton(text="👥 Do'stlar"), KeyboardButton(text="🏆 Reyting")]
+        ],
+        resize_keyboard=True
+    )
+
+
+def main_inline_keyboard() -> InlineKeyboardMarkup:
+    """Asosiy inline navigatsiya menyusi"""
     return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🎬 Video yaratish", callback_data="video_start")],
         [
-            InlineKeyboardButton(text="🎬 Video yasash", callback_data="video_start"),
-            InlineKeyboardButton(text="💰 Balans to'ldirish", callback_data="topup"),
+            InlineKeyboardButton(text="🪙 Tanga olish", callback_data="topup"),
+            InlineKeyboardButton(text="📋 Tarix", callback_data="history_0")
         ],
         [
-            InlineKeyboardButton(text="📋 Paketlar", callback_data="topup"),
-            InlineKeyboardButton(text="🔗 Do'st taklif qil", callback_data="referral"),
-        ],
+            InlineKeyboardButton(text="👥 Do'stlar", callback_data="referral"),
+            InlineKeyboardButton(text="🏆 Reyting", callback_data="top_users")
+        ]
     ])
 
 
 def back_button(lang: str = "uz") -> InlineKeyboardMarkup:
-    text = "◀️ Orqaga" if lang == "uz" else "◀️ Назад"
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text=text, callback_data="back_main")],
+        [InlineKeyboardButton(text="◀️ Orqaga", callback_data="back_main")],
     ])
 
 
 def language_select_keyboard() -> InlineKeyboardMarkup:
+    """Faqat yangi foydalanuvchilar til tanlashi uchun (ortiqcha orqaga tugmasisiz)"""
     return InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(text="🇺🇿 O'zbekcha", callback_data="set_lang_uz"),
@@ -49,66 +50,34 @@ def settings_keyboard(lang: str = "uz") -> InlineKeyboardMarkup:
             InlineKeyboardButton(text="🇺🇿 O'zbekcha", callback_data="set_lang_uz"),
             InlineKeyboardButton(text="🇷🇺 Русский", callback_data="set_lang_ru"),
         ],
-        [InlineKeyboardButton(
-            text="◀️ Orqaga" if lang == "uz" else "◀️ Назад",
-            callback_data="back_main"
-        )],
+        [InlineKeyboardButton(text="◀️ Orqaga", callback_data="back_main")],
     ])
 
 
 def after_video_keyboard(lang: str = "uz") -> InlineKeyboardMarkup:
-    if lang == "ru":
-        return InlineKeyboardMarkup(inline_keyboard=[
-            [
-                InlineKeyboardButton(text="🎬 Ещё видео", callback_data="video_start"),
-                InlineKeyboardButton(text="💰 Пополнить", callback_data="topup"),
-            ],
-        ])
+    """Video yaratilgandan keyin ko'rsatiladigan tugmalar"""
     return InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="🎬 Yana bir video", callback_data="video_start"),
-            InlineKeyboardButton(text="💰 Balans to'ldirish", callback_data="topup"),
+            InlineKeyboardButton(text="🎬 Yana video", callback_data="video_start"),
+            InlineKeyboardButton(text="🪙 Tanga olish", callback_data="topup"),
         ],
+        [InlineKeyboardButton(text="📤 Do'stga yubor", switch_inline_query="Zo'r bot, matn kiritib AI video yarating!")]
     ])
 
 
 def balance_keyboard(lang: str = "uz") -> InlineKeyboardMarkup:
-    if lang == "ru":
-        return InlineKeyboardMarkup(inline_keyboard=[
-            [
-                InlineKeyboardButton(text="💰 Пополнить", callback_data="topup"),
-                InlineKeyboardButton(text="📋 История", callback_data="history_0"),
-            ],
-        ])
+    """Balans sahifasidagi tugmalar"""
     return InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="💰 Balans to'ldirish", callback_data="topup"),
-            InlineKeyboardButton(text="📋 Video tarixi", callback_data="history_0"),
+            InlineKeyboardButton(text="🪙 Tanga olish", callback_data="topup"),
+            InlineKeyboardButton(text="📋 Tarix", callback_data="history_0"),
         ],
     ])
 
 
-def history_keyboard(offset: int, total: int, lang: str = "uz") -> InlineKeyboardMarkup:
-    buttons = []
-    nav = []
-    if offset > 0:
-        prev_text = "◀️ Oldingi" if lang == "uz" else "◀️ Назад"
-        nav.append(InlineKeyboardButton(text=prev_text, callback_data=f"history_{offset - 10}"))
-    if offset + 10 < total:
-        next_text = "Keyingi ▶️" if lang == "uz" else "Далее ▶️"
-        nav.append(InlineKeyboardButton(text=next_text, callback_data=f"history_{offset + 10}"))
-    if nav:
-        buttons.append(nav)
-    new_text = "🎬 Yangi video" if lang == "uz" else "🎬 Новое видео"
-    buttons.append([InlineKeyboardButton(text=new_text, callback_data="video_start")])
-    return InlineKeyboardMarkup(inline_keyboard=buttons)
-
-
 def referral_keyboard(ref_link: str, lang: str = "uz") -> InlineKeyboardMarkup:
-    if lang == "ru":
-        return InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="📤 Поделиться", switch_inline_query=f"Создавайте AI видео! {ref_link}")],
-        ])
+    """Referral sahifasidagi tugmalar"""
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="📤 Ulashish", switch_inline_query=f"AI video yarating! {ref_link}")],
+        [InlineKeyboardButton(text="📤 Ulashish", switch_inline_query=f"AI orqali video yarating! 50 bepul tanga olish uchun havola: {ref_link}")],
+        [InlineKeyboardButton(text="📊 Batafsil", callback_data="ref_details")],
     ])

@@ -1,5 +1,4 @@
 from pydantic_settings import BaseSettings
-from pydantic import field_validator
 from typing import List, Dict, Any
 import os
 
@@ -13,23 +12,8 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str = "sqlite+aiosqlite:///./bot.db"
 
-    # SiliconFlow
-    SILICONFLOW_API_KEY: str = ""
-
-    # Atlas Cloud
-    ATLASCLOUD_API_KEY: str = ""
-    ATLASCLOUD_BASE_URL: str = "https://api.atlascloud.ai/v1"
-
-    # Payme
-    PAYME_MERCHANT_ID: str = ""
-    PAYME_KEY: str = ""
-    PAYME_TEST_KEY: str = ""
-    PAYME_TEST_MODE: bool = True
-
-    # Click
-    CLICK_SERVICE_ID: str = ""
-    CLICK_MERCHANT_ID: str = ""
-    CLICK_SECRET_KEY: str = ""
+    # fal.ai
+    FAL_KEY: str = ""
 
     # Admin
     ADMIN_IDS: str = ""
@@ -37,21 +21,23 @@ class Settings(BaseSettings):
     ADMIN_PASSWORD: str = "admin123"
     MAINTENANCE_MODE: bool = False
 
-    # Pricing (so'm)
-    FAST_VIDEO_PRICE: int = 3000
-    PREMIUM_VIDEO_PRICE: int = 5000
-    FREE_VIDEO_VALUE_SOM: int = 3000
-    REFERRAL_BONUS_SOM: int = 3000
+    # Pricing (tangas)
+    VIDEO_COST_TANGAS: int = 30
+    WELCOME_BONUS_TANGAS: int = 50
+    REFERRAL_BONUS_TANGAS: int = 20
+    PREMIUM_COST_TANGAS: int = 500
+    STREAK_7_BONUS: int = 10
+    STREAK_3_BONUS: int = 2
 
-    # Packages
-    STARTER_PRICE: int = 15000
-    STARTER_VIDEOS: int = 3
-    STANDARD_PRICE: int = 40000
-    STANDARD_VIDEOS: int = 12
-    PRO_PRICE: int = 90000
-    PRO_VIDEOS: int = 30
-    ENTERPRISE_PRICE: int = 200000
-    ENTERPRISE_VIDEOS: int = 75
+    # Karta (qo'lda to'lov)
+    CARD_NUMBER: str = "8600123456789012"
+    CARD_OWNER: str = "Ism Familiya"
+
+    # Stars Packages
+    STARS_PACKAGE_SMALL: int = 150
+    STARS_PACKAGE_MEDIUM: int = 420
+    STARS_PACKAGE_LARGE: int = 1000
+    STARS_PACKAGE_MEGA: int = 2100
 
     # App
     APP_HOST: str = "0.0.0.0"
@@ -65,44 +51,38 @@ class Settings(BaseSettings):
         return [int(x.strip()) for x in self.ADMIN_IDS.split(",") if x.strip()]
 
     @property
-    def payme_key_actual(self) -> str:
-        if self.PAYME_TEST_MODE:
-            return self.PAYME_TEST_KEY
-        return self.PAYME_KEY
+    def is_maintenance(self) -> bool:
+        """Agarda BOT_TOKEN kiritilmagan bo'lsa yoki MAINTENANCE_MODE=True bo'lsa, texnik rejim yoqiladi"""
+        return not bool(self.BOT_TOKEN.strip()) or self.MAINTENANCE_MODE
 
     @property
     def packages(self) -> Dict[str, Dict[str, Any]]:
         return {
-            "starter": {
-                "name": "🥉 Starter",
-                "price": self.STARTER_PRICE,
-                "videos": self.STARTER_VIDEOS,
-                "price_per_video": self.STARTER_PRICE // self.STARTER_VIDEOS if self.STARTER_VIDEOS else 0,
+            "small": {
+                "name": "🥉 Kichik",
+                "tangas": 60,
+                "stars": self.STARS_PACKAGE_SMALL,
+                "som": 18000,
             },
-            "standard": {
-                "name": "🥈 Standard",
-                "price": self.STANDARD_PRICE,
-                "videos": self.STANDARD_VIDEOS,
-                "price_per_video": self.STANDARD_PRICE // self.STANDARD_VIDEOS if self.STANDARD_VIDEOS else 0,
+            "medium": {
+                "name": "🥈 O'rta",
+                "tangas": 180,
+                "stars": self.STARS_PACKAGE_MEDIUM,
+                "som": 50000,
             },
-            "pro": {
-                "name": "🥇 Pro",
-                "price": self.PRO_PRICE,
-                "videos": self.PRO_VIDEOS,
-                "price_per_video": self.PRO_PRICE // self.PRO_VIDEOS if self.PRO_VIDEOS else 0,
+            "large": {
+                "name": "🥇 Katta",
+                "tangas": 450,
+                "stars": self.STARS_PACKAGE_LARGE,
+                "som": 120000,
             },
-            "enterprise": {
-                "name": "💎 Enterprise",
-                "price": self.ENTERPRISE_PRICE,
-                "videos": self.ENTERPRISE_VIDEOS,
-                "price_per_video": self.ENTERPRISE_PRICE // self.ENTERPRISE_VIDEOS if self.ENTERPRISE_VIDEOS else 0,
+            "mega": {
+                "name": "💎 Mega",
+                "tangas": 1000,
+                "stars": self.STARS_PACKAGE_MEGA,
+                "som": 250000,
             },
         }
-
-    @property
-    def is_maintenance(self) -> bool:
-        """Agarda BOT_TOKEN kiritilmagan bo'lsa yoki MAINTENANCE_MODE=True bo'lsa, texnik rejim yoqiladi"""
-        return not bool(self.BOT_TOKEN.strip()) or self.MAINTENANCE_MODE
 
     class Config:
         env_file = ".env"

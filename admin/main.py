@@ -3,7 +3,6 @@ import logging
 import csv
 import io
 from datetime import datetime, timedelta
-from decimal import Decimal
 from typing import Optional
 
 from fastapi import FastAPI, Depends, HTTPException, status, Request, Form
@@ -18,7 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from bot.config import settings
 from bot.database.queries import (
     AsyncSessionLocal, init_db, get_user_count, get_new_users_today,
-    get_today_video_count, get_today_revenue, engine
+    get_today_video_count, get_today_revenue, engine, package_price_som
 )
 from bot.database.models import User, VideoGeneration, Payment, Referral
 from bot.main import create_dispatcher, setup_logging
@@ -93,7 +92,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="VideoAI Bot Admin Panel",
+    title="AI Videochi Bot Admin Panel",
     lifespan=lifespan,
     docs_url=None,
     redoc_url=None
@@ -126,13 +125,14 @@ async def admin_dashboard(
         total_users = await get_user_count(session)
         new_users_today = await get_new_users_today(session)
         today_videos = await get_today_video_count(session)
-        today_rev = await get_today_revenue(session)
+        today_rev = await get_today_revenue(session)  # so'mda
         
-        # Jami tushum
-        result_total_rev = await session.execute(
-            select(func.sum(Payment.amount)).where(Payment.status == "confirmed")
+        # Jami tushum so'mda
+        result_total_payments = await session.execute(
+            select(Payment).where(Payment.status == "confirmed")
         )
-        total_revenue = result_total_rev.scalar() or Decimal("0.00")
+        payments_confirmed = result_total_payments.scalars().all()
+        total_revenue = sum(package_price_som(p.package or "") for p in payments_confirmed)
         
         # Jami muvaffaqiyatli videolar
         result_total_videos = await session.execute(
@@ -181,7 +181,7 @@ async def admin_dashboard(
 @app.post("/admin/adjust-balance")
 async def adjust_balance(
     user_id: int = Form(...),
-    amount: float = Form(...),
+    amount: int = Form(...),  # tangalarda
     username: str = Depends(check_admin_credentials)
 ):
     async with AsyncSessionLocal() as session:
@@ -190,9 +190,9 @@ async def adjust_balance(
         if not user:
             raise HTTPException(status_code=404, detail="Foydalanuvchi topilmadi")
         
-        user.balance += Decimal(str(amount))
-        if user.balance < 0:
-            user.balance = Decimal("0.00")
+        user.tangas += amount
+        if user.tangas < 0:
+            user.tangas = 0
             
         await session.commit()
     return RedirectResponse(url="/admin", status_code=303)
@@ -204,11 +204,10 @@ async def get_daily_report(username: str = Depends(check_admin_credentials)):
     writer = csv.writer(output)
     writer.writerow([
         "Sana", "Yangi foydalanuvchilar", "Yaratilgan videolar", 
-        "Jami to'lovlar (so'm)", "Muvaffaqiyatli to'lovlar (so'm)"
+        "Tasdiqlangan to'lovlar soni", "Muvaffaqiyatli to'lovlar (so'm)"
     ])
     
     async with AsyncSessionLocal() as session:
-        # Oxirgi 30 kun uchun hisobot
         for i in range(30):
             day = datetime.utcnow().date() - timedelta(days=i)
             start_dt = datetime.combine(day, datetime.min.time())
@@ -228,21 +227,17 @@ async def get_daily_report(username: str = Depends(check_admin_credentials)):
             )
             videos_count = res_v.scalar() or 0
             
-            # Jami va tasdiqlangan to'lovlar
-            res_p_all = await session.execute(
-                select(func.sum(Payment.amount)).where(Payment.created_at.between(start_dt, end_dt))
-            )
-            all_pay = res_p_all.scalar() or Decimal("0.00")
-            
+            # Tasdiqlangan to'lovlar va ularning qiymati so'mda
             res_p_conf = await session.execute(
-                select(func.sum(Payment.amount)).where(
+                select(Payment).where(
                     Payment.created_at.between(start_dt, end_dt),
                     Payment.status == "confirmed"
                 )
             )
-            conf_pay = res_p_conf.scalar() or Decimal("0.00")
+            payments = res_p_conf.scalars().all()
+            conf_pay_som = sum(package_price_som(p.package or "") for p in payments)
             
-            writer.writerow([day.strftime("%Y-%m-%d"), users_count, videos_count, all_pay, conf_pay])
+            writer.writerow([day.strftime("%Y-%m-%d"), users_count, videos_count, len(payments), conf_pay_som])
             
     output.seek(0)
     response = StreamingResponse(iter([output.getvalue()]), media_type="text/csv")
@@ -256,18 +251,15 @@ async def get_monthly_report(username: str = Depends(check_admin_credentials)):
     writer = csv.writer(output)
     writer.writerow([
         "Oy", "Yangi foydalanuvchilar", "Yaratilgan videolar", 
-        "Jami to'lovlar (so'm)", "Muvaffaqiyatli to'lovlar (so'm)"
+        "Tasdiqlangan to'lovlar soni", "Muvaffaqiyatli to'lovlar (so'm)"
     ])
     
     async with AsyncSessionLocal() as session:
-        # Oxirgi 12 oy uchun hisobot
         for i in range(12):
             today = datetime.utcnow().date()
-            # Oyni hisoblash
             first_day_of_this_month = today.replace(day=1)
             target_month_first_day = (first_day_of_this_month - timedelta(days=i*30)).replace(day=1)
             
-            # Kelgusi oyning boshlanishi
             if target_month_first_day.month == 12:
                 next_month_first_day = target_month_first_day.replace(year=target_month_first_day.year + 1, month=1)
             else:
@@ -290,21 +282,17 @@ async def get_monthly_report(username: str = Depends(check_admin_credentials)):
             )
             videos_count = res_v.scalar() or 0
             
-            # Jami va tasdiqlangan to'lovlar
-            res_p_all = await session.execute(
-                select(func.sum(Payment.amount)).where(Payment.created_at.between(start_dt, end_dt))
-            )
-            all_pay = res_p_all.scalar() or Decimal("0.00")
-            
+            # Tasdiqlangan to'lovlar va ularning qiymati so'mda
             res_p_conf = await session.execute(
-                select(func.sum(Payment.amount)).where(
+                select(Payment).where(
                     Payment.created_at.between(start_dt, end_dt),
                     Payment.status == "confirmed"
                 )
             )
-            conf_pay = res_p_conf.scalar() or Decimal("0.00")
+            payments = res_p_conf.scalars().all()
+            conf_pay_som = sum(package_price_som(p.package or "") for p in payments)
             
-            writer.writerow([target_month_first_day.strftime("%Y-%m"), users_count, videos_count, all_pay, conf_pay])
+            writer.writerow([target_month_first_day.strftime("%Y-%m"), users_count, videos_count, len(payments), conf_pay_som])
             
     output.seek(0)
     response = StreamingResponse(iter([output.getvalue()]), media_type="text/csv")

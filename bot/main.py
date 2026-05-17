@@ -6,6 +6,8 @@ from pathlib import Path
 from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.client.default import DefaultBotProperties
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from bot.config import Settings, settings
 from bot.database.queries import init_db
@@ -16,6 +18,11 @@ from bot.handlers.balance import router as balance_router
 from bot.handlers.referral import router as referral_router
 from bot.handlers.settings import router as settings_router
 from bot.handlers.admin import router as admin_router
+from bot.handlers.premium import router as premium_router
+from bot.handlers.rating import router as rating_router
+from bot.handlers.history import router as history_router
+from bot.middleware.maintenance import MaintenanceMiddleware
+from bot.scheduler.tasks import run_daily_scheduler_tasks
 
 
 def setup_logging() -> None:
@@ -26,9 +33,6 @@ def setup_logging() -> None:
     # Suppress noisy libraries
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("aiogram").setLevel(logging.INFO)
-
-
-from bot.middleware.maintenance import MaintenanceMiddleware
 
 
 def create_dispatcher(settings: Settings) -> Dispatcher:
@@ -44,15 +48,28 @@ def create_dispatcher(settings: Settings) -> Dispatcher:
     dp.include_router(balance_router)
     dp.include_router(referral_router)
     dp.include_router(settings_router)
+    dp.include_router(premium_router)
+    dp.include_router(rating_router)
+    dp.include_router(history_router)
     dp.include_router(admin_router)
     return dp
 
 
 async def on_startup(bot: Bot) -> None:
     await init_db()
+    
+    # APScheduler ishga tushirish (har kuni 20:00 da)
+    scheduler = AsyncIOScheduler()
+    scheduler.add_job(
+        run_daily_scheduler_tasks,
+        "cron",
+        hour=20,
+        minute=0,
+        args=[bot]
+    )
+    scheduler.start()
+    logging.info("APScheduler kunlik vazifalari ishga tushirildi.")
 
-
-from aiogram.client.default import DefaultBotProperties
 
 async def main() -> None:
     bot = Bot(token=settings.BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))

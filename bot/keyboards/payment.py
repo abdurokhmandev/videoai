@@ -1,73 +1,83 @@
-"""To'lov klaviaturalari"""
-
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from bot.config import settings
 
 
-def packages_keyboard(lang: str = "uz") -> InlineKeyboardMarkup:
-    pkgs = settings.packages
-    if lang == "ru":
-        return InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(
-                text=f"🥉 Starter — {pkgs['starter']['price']:,} сум ({pkgs['starter']['videos']} видео)",
-                callback_data="pkg_starter"
-            )],
-            [InlineKeyboardButton(
-                text=f"🥈 Standard — {pkgs['standard']['price']:,} сум ({pkgs['standard']['videos']} видео) ⭐",
-                callback_data="pkg_standard"
-            )],
-            [InlineKeyboardButton(
-                text=f"🥇 Pro — {pkgs['pro']['price']:,} сум ({pkgs['pro']['videos']} видео)",
-                callback_data="pkg_pro"
-            )],
-            [InlineKeyboardButton(
-                text=f"💎 Enterprise — {pkgs['enterprise']['price']:,} сум ({pkgs['enterprise']['videos']} видео)",
-                callback_data="pkg_enterprise"
-            )],
-        ])
+def packages_keyboard() -> InlineKeyboardMarkup:
+    """Tanga olish uchun paketlar ro'yxati"""
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(
-            text=f"🥉 Starter — {pkgs['starter']['price']:,} so'm ({pkgs['starter']['videos']} video)",
-            callback_data="pkg_starter"
+            text="🥉 60 tanga — 150 ⭐ yoki 18,000 so'm",
+            callback_data="pkg_small"
         )],
         [InlineKeyboardButton(
-            text=f"🥈 Standard — {pkgs['standard']['price']:,} so'm ({pkgs['standard']['videos']} video) ⭐ MASHHUR",
-            callback_data="pkg_standard"
+            text="🥈 180 tanga — 420 ⭐ yoki 50,000 so'm ⭐ MASHHUR",
+            callback_data="pkg_medium"
         )],
         [InlineKeyboardButton(
-            text=f"🥇 Pro — {pkgs['pro']['price']:,} so'm ({pkgs['pro']['videos']} video)",
-            callback_data="pkg_pro"
+            text="🥇 450 tanga — 1000 ⭐ yoki 120,000 so'm",
+            callback_data="pkg_large"
         )],
         [InlineKeyboardButton(
-            text=f"💎 Enterprise — {pkgs['enterprise']['price']:,} so'm ({pkgs['enterprise']['videos']} video)",
-            callback_data="pkg_enterprise"
+            text="💎 1000 tanga — 2100 ⭐ yoki 250,000 so'm",
+            callback_data="pkg_mega"
         )],
+        [InlineKeyboardButton(text="◀️ Orqaga", callback_data="back_main")]
     ])
 
 
-def payment_method_keyboard(package_key: str, lang: str = "uz") -> InlineKeyboardMarkup:
-    back_text = "◀️ Orqaga" if lang == "uz" else "◀️ Назад"
+def payment_methods_keyboard(package_key: str) -> InlineKeyboardMarkup:
+    """Paket tanlangandan keyin to'lov usullari"""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(
+            text="⭐ Telegram Stars",
+            callback_data=f"pay_stars_{package_key}"
+        )],
+        [InlineKeyboardButton(
+            text="💳 Karta orqali (qo'lda)",
+            callback_data=f"pay_manual_{package_key}"
+        )],
+        [InlineKeyboardButton(text="◀️ Orqaga", callback_data="topup")]
+    ])
+
+
+def manual_payment_confirm_keyboard(package_key: str) -> InlineKeyboardMarkup:
+    """Qo'lda karta orqali to'lov chekini yuborishni tasdiqlash"""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(
+            text="✅ Chekni yubordim",
+            callback_data=f"confirm_receipt_{package_key}"
+        )],
+        [InlineKeyboardButton(text="❌ Bekor qilish", callback_data="topup")]
+    ])
+
+
+def balance_low_keyboard() -> InlineKeyboardMarkup:
+    """Balans yetmaganida topup-ga yoki do'stlarga yo'naltiruvchi klaviatura"""
     return InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="🟢 Payme", callback_data=f"pay_payme_{package_key}"),
-            InlineKeyboardButton(text="🔵 Click", callback_data=f"pay_click_{package_key}"),
+            InlineKeyboardButton(text="⭐ Stars bilan olish", callback_data="topup"),
+            InlineKeyboardButton(text="💳 Karta orqali olish", callback_data="topup"),
         ],
-        [InlineKeyboardButton(text=back_text, callback_data="topup")],
+        [InlineKeyboardButton(text="👥 Do'st taklif qil (+20 🪙)", callback_data="referral")]
     ])
 
 
 def admin_keyboard() -> InlineKeyboardMarkup:
+    """Admin panel boshqaruv tugmalari"""
     return InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="📊 To'liq statistika", callback_data="admin_stats"),
+            InlineKeyboardButton(text="📊 Statistika", callback_data="admin_stats"),
+            InlineKeyboardButton(text="📢 Xabar yuborish", callback_data="admin_broadcast")
+        ],
+        [
             InlineKeyboardButton(text="👥 Userlar", callback_data="admin_users"),
+            InlineKeyboardButton(text="💰 Tranzaksiyalar", callback_data="admin_payments")
         ],
         [
-            InlineKeyboardButton(text="📢 Xabar yuborish", callback_data="admin_broadcast"),
-            InlineKeyboardButton(text="💰 Tranzaksiyalar", callback_data="admin_payments"),
+            InlineKeyboardButton(text="🎬 So'nggi videolar", callback_data="admin_videos"),
+            InlineKeyboardButton(text="🏆 Top userlar", callback_data="admin_top")
         ],
         [
-            InlineKeyboardButton(text="🎬 Videolar", callback_data="admin_videos"),
-            InlineKeyboardButton(text="🏆 Top userlar", callback_data="admin_top"),
-        ],
+            InlineKeyboardButton(text="◀️ Asosiy menyu", callback_data="back_main")
+        ]
     ])
+

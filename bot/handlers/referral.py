@@ -11,30 +11,25 @@ router = Router()
 
 
 async def get_referral_response(session, user, bot_username: str):
-    # Referral ma'lumotlarini tayyorlash
-    bonus_val = settings.REFERRAL_BONUS_SOM
     stats = await get_referral_stats(session, user.id)
     total_referred = stats["total_referred"]
     bonuses_given = stats["bonuses_given"]
-    saved_val = total_referred * bonus_val
     
+    # +20 tanga sovg'a
     text = get_msg(user.language, "referral_info").format(
         bot_username=bot_username,
         ref_code=user.referral_code,
-        bonus=bonus_val,
         total_referred=total_referred,
-        bonuses=bonuses_given,
-        saved=saved_val
+        bonuses=bonuses_given * 20
     )
     
     ref_link = f"https://t.me/{bot_username}?start=REF_{user.referral_code}"
     keyboard = referral_keyboard(ref_link, user.language)
-    
-    # Orqaga qaytish tugmasini qo'shish
     keyboard.inline_keyboard.append(back_button(user.language).inline_keyboard[0])
     return text, keyboard
 
 
+@router.message(F.text == "👥 Do'stlar")
 @router.message(Command("referral"))
 async def referral_message_handler(message: Message):
     async with AsyncSessionLocal() as session:
@@ -64,3 +59,11 @@ async def referral_callback_handler(callback: CallbackQuery):
         text, keyboard = await get_referral_response(session, user, bot_info.username)
         await callback.message.edit_text(text, reply_markup=keyboard)
         await callback.answer()
+
+
+@router.callback_query(F.data == "ref_details")
+async def ref_details_callback(callback: CallbackQuery):
+    await callback.answer(
+        "Taklif qilingan do'stingiz birinchi marta botni ishga tushirishi bilan sizga ham, unga ham +20 tanga avtomatik qo'shiladi!",
+        show_alert=True
+    )

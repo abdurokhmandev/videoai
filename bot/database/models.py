@@ -1,10 +1,10 @@
 import logging
 from decimal import Decimal
-from datetime import datetime, timezone
+from datetime import datetime, date
 from typing import Optional, List
 from sqlalchemy import (
     BigInteger, String, Boolean, Integer, Numeric, Text,
-    ForeignKey, TIMESTAMP, func, UniqueConstraint
+    ForeignKey, TIMESTAMP, func, UniqueConstraint, Date
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -20,10 +20,13 @@ class User(Base):
     username: Mapped[Optional[str]] = mapped_column(String(100))
     full_name: Mapped[Optional[str]] = mapped_column(String(200))
     language: Mapped[str] = mapped_column(String(5), default="uz")
-    balance: Mapped[Decimal] = mapped_column(Numeric(10, 2), default=Decimal("0.00"))
-    total_spent: Mapped[Decimal] = mapped_column(Numeric(10, 2), default=Decimal("0.00"))
+    tangas: Mapped[int] = mapped_column(Integer, default=50)        # Boshlang'ich 50 tanga
+    total_spent: Mapped[int] = mapped_column(Integer, default=0)    # Jami sarflangan tanga
     total_videos: Mapped[int] = mapped_column(Integer, default=0)
-    free_used: Mapped[bool] = mapped_column(Boolean, default=False)
+    streak_days: Mapped[int] = mapped_column(Integer, default=0)
+    last_video_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    is_premium: Mapped[bool] = mapped_column(Boolean, default=False)
+    premium_until: Mapped[Optional[datetime]] = mapped_column(TIMESTAMP, nullable=True)
     referral_code: Mapped[Optional[str]] = mapped_column(String(20), unique=True)
     referred_by: Mapped[Optional[int]] = mapped_column(BigInteger, ForeignKey("users.id"), nullable=True)
     is_blocked: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -33,6 +36,7 @@ class User(Base):
     # Relationships
     generations: Mapped[List["VideoGeneration"]] = relationship("VideoGeneration", back_populates="user")
     payments: Mapped[List["Payment"]] = relationship("Payment", back_populates="user")
+    subscriptions: Mapped[List["PremiumSubscription"]] = relationship("PremiumSubscription", back_populates="user")
 
 
 class VideoGeneration(Base):
@@ -41,17 +45,12 @@ class VideoGeneration(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id"))
     prompt: Mapped[str] = mapped_column(Text, nullable=False)
-    prompt_uz: Mapped[Optional[str]] = mapped_column(Text)
     status: Mapped[str] = mapped_column(String(20), default="pending")
     # pending / processing / done / failed
-    api_provider: Mapped[Optional[str]] = mapped_column(String(50))
-    # siliconflow / atlascloud
     api_job_id: Mapped[Optional[str]] = mapped_column(String(200))
     video_url: Mapped[Optional[str]] = mapped_column(Text)
-    cost_usd: Mapped[Optional[Decimal]] = mapped_column(Numeric(8, 4))
-    cost_som: Mapped[Optional[Decimal]] = mapped_column(Numeric(10, 2))
-    duration_sec: Mapped[int] = mapped_column(Integer, default=8)
-    error_message: Mapped[Optional[str]] = mapped_column(Text)
+    cost_tangas: Mapped[int] = mapped_column(Integer, default=30)
+    duration_sec: Mapped[int] = mapped_column(Integer, default=5)
     created_at: Mapped[datetime] = mapped_column(TIMESTAMP, default=func.now())
     completed_at: Mapped[Optional[datetime]] = mapped_column(TIMESTAMP, nullable=True)
 
@@ -64,14 +63,15 @@ class Payment(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id"))
-    amount: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
+    amount_tangas: Mapped[int] = mapped_column(Integer, nullable=False)
     provider: Mapped[Optional[str]] = mapped_column(String(20))
-    # payme / click
+    # stars / manual
     provider_tx_id: Mapped[Optional[str]] = mapped_column(String(200), unique=True)
     status: Mapped[str] = mapped_column(String(20), default="pending")
     # pending / confirmed / cancelled
     package: Mapped[Optional[str]] = mapped_column(String(20))
-    # starter / standard / pro / enterprise
+    # small / medium / large / mega
+    admin_confirmed: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(TIMESTAMP, default=func.now())
     confirmed_at: Mapped[Optional[datetime]] = mapped_column(TIMESTAMP, nullable=True)
 
@@ -91,3 +91,16 @@ class Referral(Base):
     __table_args__ = (
         UniqueConstraint("referrer_id", "referred_id", name="uq_referral_pair"),
     )
+
+
+class PremiumSubscription(Base):
+    __tablename__ = "premium_subscriptions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id"))
+    started_at: Mapped[datetime] = mapped_column(TIMESTAMP, default=func.now())
+    expires_at: Mapped[datetime] = mapped_column(TIMESTAMP)
+    plan: Mapped[str] = mapped_column(String(20))  # monthly/yearly
+
+    # Relationships
+    user: Mapped["User"] = relationship("User", back_populates="subscriptions")

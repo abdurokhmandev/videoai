@@ -2,13 +2,13 @@ import logging
 import secrets
 import string
 from decimal import Decimal
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, date
 from typing import Optional, List, Tuple
 
 from sqlalchemy import select, update, delete, func, and_, or_, desc
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 
-from bot.database.models import Base, User, VideoGeneration, Payment, Referral
+from bot.database.models import Base, User, VideoGeneration, Payment, Referral, PremiumSubscription
 from bot.config import settings
 
 logger = logging.getLogger(__name__)
@@ -68,13 +68,14 @@ async def get_or_create_user(
         await session.commit()
         return user, False
 
-    # Create new user with referral code
+    # Create new user with referral code and welcome 50 tangas
     ref_code = generate_referral_code()
     user = User(
         id=user_id,
         username=username,
         full_name=full_name,
         referral_code=ref_code,
+        tangas=50,  # Boshlang'ich 50 tanga
     )
     session.add(user)
     await session.commit()
@@ -96,34 +97,34 @@ async def get_user_by_referral_code(
     return result.scalar_one_or_none()
 
 
-async def add_balance(
-    session: AsyncSession, user_id: int, amount: Decimal
-) -> Decimal:
-    """Add balance to user. Returns new balance."""
+async def add_tangas(
+    session: AsyncSession, user_id: int, amount: int
+) -> int:
+    """Add tangas to user. Returns new tangas count."""
     result = await session.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
     if not user:
         raise ValueError(f"User {user_id} not found")
-    user.balance += amount
+    user.tangas += amount
     await session.commit()
     await session.refresh(user)
-    return user.balance
+    return user.tangas
 
 
-async def deduct_balance(
-    session: AsyncSession, user_id: int, amount: Decimal
-) -> Decimal:
-    """Deduct balance from user. Returns new balance."""
+async def deduct_tangas(
+    session: AsyncSession, user_id: int, amount: int
+) -> int:
+    """Deduct tangas from user. Returns new tangas count."""
     result = await session.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
     if not user:
         raise ValueError(f"User {user_id} not found")
-    if user.balance < amount:
-        raise ValueError("Insufficient balance")
-    user.balance -= amount
+    if user.tangas < amount:
+        raise ValueError("Insufficient tangas balance")
+    user.tangas -= amount
     await session.commit()
     await session.refresh(user)
-    return user.balance
+    return user.tangas
 
 
 async def mark_free_used(session: AsyncSession, user_id: int):
@@ -192,19 +193,40 @@ async def get_top_users(session: AsyncSession, limit: int = 10) -> List[User]:
     return list(result.scalars().all())
 
 
-async def manual_adjust_balance(
-    session: AsyncSession, user_id: int, amount: Decimal, admin_note: str = ""
+async def manual_adjust_tangas(
+    session: AsyncSession, user_id: int, amount: int, admin_note: str = ""
 ):
-    """Admin: manually add or subtract balance"""
+    """Admin: manually add or subtract tangas"""
     result = await session.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
     if not user:
         raise ValueError(f"User {user_id} not found")
-    user.balance += amount
-    if user.balance < 0:
-        user.balance = Decimal("0.00")
+    user.tangas += amount
+    if user.tangas < 0:
+        user.tangas = 0
     await session.commit()
     return user
+
+
+async def increment_streak(session: AsyncSession, user_id: int) -> int:
+    """Increment user streak. Returns new streak count."""
+    result = await session.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    if user:
+        today_val = date.today()
+        if user.last_video_date == today_val:
+            # Already made a video today, streak remains same
+            return user.streak_days
+        elif user.last_video_date == today_val - timedelta(days=1):
+            # Consecutive day!
+            user.streak_days += 1
+        else:
+            # Streak broken, reset to 1
+            user.streak_days = 1
+        user.last_video_date = today_val
+        await session.commit()
+        return user.streak_days
+    return 0
 
 
 # ─── VIDEO GENERATION QUERIES ─────────────────────────────────────────────────
@@ -214,13 +236,14 @@ async def create_generation(
     user_id: int,
     prompt: str,
     api_provider: str,
-    cost_som: Decimal,
+    cost_tangas: int = 30,
 ) -> VideoGeneration:
     gen = VideoGeneration(
         user_id=user_id,
         prompt=prompt,
         api_provider=api_provider,
-        cost_som=cost_som,
+        cost_tangas=cost_tangas,
+        duration_sec=5,
         status="processing",
     )
     session.add(gen)
@@ -262,12 +285,12 @@ async def fail_generation(
         await session.commit()
 
 
-async def update_user_stats(session: AsyncSession, user_id: int, cost_som: Decimal):
+async def update_user_stats(session: AsyncSession, user_id: int, cost_tangas: int):
     """Update total_spent and total_videos after successful generation"""
     result = await session.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
     if user:
-        user.total_spent += cost_som
+        user.total_spent += cost_tangas
         user.total_videos += 1
         await session.commit()
 
@@ -304,18 +327,32 @@ async def get_today_video_count(session: AsyncSession) -> int:
     return result.scalar_one()
 
 
-async def get_today_revenue(session: AsyncSession) -> Decimal:
+def package_price_som(package: str) -> int:
+    mapping = {
+        "small": 18000,
+        "medium": 50000,
+        "large": 120000,
+        "mega": 250000
+    }
+    return mapping.get(package.lower(), 0)
+
+
+async def get_today_revenue(session: AsyncSession) -> int:
+    """Calculate today's revenue in so'm based on package pricing"""
     today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
     result = await session.execute(
-        select(func.sum(Payment.amount)).where(
+        select(Payment).where(
             and_(
                 Payment.created_at >= today,
                 Payment.status == "confirmed",
             )
         )
     )
-    val = result.scalar_one()
-    return val if val else Decimal("0.00")
+    payments = result.scalars().all()
+    total_revenue = 0
+    for p in payments:
+        total_revenue += package_price_som(p.package or "")
+    return total_revenue
 
 
 # ─── PAYMENT QUERIES ──────────────────────────────────────────────────────────
@@ -323,14 +360,14 @@ async def get_today_revenue(session: AsyncSession) -> Decimal:
 async def create_payment(
     session: AsyncSession,
     user_id: int,
-    amount: Decimal,
+    amount_tangas: int,
     provider: str,
     package: str,
     provider_tx_id: Optional[str] = None,
 ) -> Payment:
     payment = Payment(
         user_id=user_id,
-        amount=amount,
+        amount_tangas=amount_tangas,
         provider=provider,
         package=package,
         provider_tx_id=provider_tx_id,
@@ -366,6 +403,23 @@ async def confirm_payment(session: AsyncSession, payment_id: int):
     if payment:
         payment.status = "confirmed"
         payment.confirmed_at = func.now()
+        # Add tangas to the user
+        await add_tangas(session, payment.user_id, payment.amount_tangas)
+        await session.commit()
+    return payment
+
+
+async def confirm_manual_payment(session: AsyncSession, payment_id: int):
+    result = await session.execute(
+        select(Payment).where(Payment.id == payment_id)
+    )
+    payment = result.scalar_one_or_none()
+    if payment:
+        payment.status = "confirmed"
+        payment.admin_confirmed = True
+        payment.confirmed_at = func.now()
+        # Add tangas to the user
+        await add_tangas(session, payment.user_id, payment.amount_tangas)
         await session.commit()
     return payment
 
@@ -414,6 +468,9 @@ async def give_referral_bonus(session: AsyncSession, referral_id: int):
     ref = result.scalar_one_or_none()
     if ref:
         ref.bonus_given = True
+        # Award both 20 tangas
+        await add_tangas(session, ref.referrer_id, 20)
+        await add_tangas(session, ref.referred_id, 20)
         await session.commit()
 
 

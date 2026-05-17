@@ -174,9 +174,9 @@
                         <input class="w-full px-4 py-2.5 rounded-xl bg-gray-900/60 border border-gray-800 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 focus:outline-none text-white transition placeholder-gray-600" type="number" name="user_id" id="user_id" required placeholder="Masalan: 123456789">
                     </div>
                     <div>
-                        <label class="block text-gray-400 text-sm mb-2" for="amount">Miqdor (so'mda)</label>
-                        <input class="w-full px-4 py-2.5 rounded-xl bg-gray-900/60 border border-gray-800 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 focus:outline-none text-white transition placeholder-gray-600" type="number" step="any" name="amount" id="amount" required placeholder="Masalan: 10000 (Kamaytirish uchun -10000)">
-                        <p class="text-xs text-gray-500 mt-1">Foydalanuvchining hisobiga pul qo'shish yoki ayirish uchun minus qiymat bering.</p>
+                        <label class="block text-gray-400 text-sm mb-2" for="amount">Miqdor (tangalarda)</label>
+                        <input class="w-full px-4 py-2.5 rounded-xl bg-gray-900/60 border border-gray-800 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 focus:outline-none text-white transition placeholder-gray-600" type="number" name="amount" id="amount" required placeholder="Masalan: 60 (Kamaytirish uchun -60)">
+                        <p class="text-xs text-gray-500 mt-1">Foydalanuvchining hisobiga tanga qo'shish yoki ayirish uchun minus qiymat bering.</p>
                     </div>
                     <button class="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-brand-dark font-bold rounded-xl shadow-lg shadow-orange-500/10 hover:shadow-orange-500/20 transform hover:-translate-y-0.5 transition duration-200 uppercase tracking-wider text-sm" type="submit">
                         Balansni yangilash
@@ -201,7 +201,7 @@
                                 <th class="pb-3 pl-2">User ID</th>
                                 <th class="pb-3">Ism / Username</th>
                                 <th class="pb-3">Til</th>
-                                <th class="pb-3 text-right">Balans</th>
+                                <th class="pb-3 text-right">Tangalar</th>
                                 <th class="pb-3 text-right pr-2">Muv. videolar</th>
                             </tr>
                         </thead>
@@ -218,7 +218,7 @@
                                         {{ u.language }}
                                     </span>
                                 </td>
-                                <td class="py-3 text-right font-semibold text-emerald-400 font-mono">{{ "{:,.0f}".format(u.balance) }} so'm</td>
+                                <td class="py-3 text-right font-semibold text-emerald-400 font-mono">{{ u.tangas }} tanga</td>
                                 <td class="py-3 text-right font-medium text-white pr-2">{{ u.total_videos }}</td>
                             </tr>
                             {% endfor %}
@@ -258,7 +258,7 @@
                                     <div class="font-mono text-gray-300 font-semibold">{{ p.user_id }}</div>
                                     <div class="text-xs text-gray-500">{{ p.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
                                 </td>
-                                <td class="py-2.5 font-semibold text-white font-mono">{{ "{:,.0f}".format(p.amount) }} so'm</td>
+                                <td class="py-2.5 font-semibold text-white font-mono">{{ p.amount_tangas }} tanga</td>
                                 <td class="py-2.5">
                                     <span class="px-2 py-0.5 rounded text-xs font-medium uppercase bg-slate-800 text-slate-300">
                                         {{ p.provider }}
