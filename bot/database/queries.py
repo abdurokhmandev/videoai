@@ -58,6 +58,20 @@ async def init_db():
             await conn.execute(text("ALTER TABLE payments ADD COLUMN IF NOT EXISTS provider_tx_id VARCHAR"))
             await conn.execute(text("ALTER TABLE payments ADD COLUMN IF NOT EXISTS admin_confirmed BOOLEAN DEFAULT FALSE"))
             
+            # Eski balance ustuni NOT NULL cheklovini xavfsiz olib tashlash (agar mavjud bo'lsa)
+            await conn.execute(text("""
+                DO $$
+                BEGIN
+                    IF EXISTS (
+                        SELECT 1 
+                        FROM information_schema.columns 
+                        WHERE table_name='users' AND column_name='balance'
+                    ) THEN
+                        ALTER TABLE users ALTER COLUMN balance DROP NOT NULL;
+                    END IF;
+                END $$;
+            """))
+            
             # Eski amount ustuni NOT NULL cheklovini xavfsiz olib tashlash (agar mavjud bo'lsa)
             await conn.execute(text("""
                 DO $$
