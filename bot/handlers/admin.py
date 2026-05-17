@@ -109,17 +109,15 @@ async def admin_broadcast_start(callback: CallbackQuery, state: FSMContext):
 
 @router.message(AdminState.entering_broadcast)
 async def admin_broadcast_entered(message: Message, state: FSMContext):
-    broadcast_text = message.text
-    await state.update_data(text=broadcast_text)
+    # Xabarning message_id va chat_id sini saqlaymiz (copy_message uchun)
+    await state.update_data(
+        broadcast_message_id=message.message_id,
+        broadcast_chat_id=message.chat.id
+    )
     
     async with AsyncSessionLocal() as session:
         user, _ = await get_or_create_user(session, message.from_user.id, None, None)
         total_u = await get_user_count(session)
-        
-        text = get_msg(user.language, "broadcast_confirm").format(
-            count=total_u,
-            text=broadcast_text
-        )
         
         kb = InlineKeyboardMarkup(inline_keyboard=[
             [
@@ -128,14 +126,23 @@ async def admin_broadcast_entered(message: Message, state: FSMContext):
             ]
         ])
         
-        await message.answer(text, reply_markup=kb)
+        preview_text = (
+            f"📢 <b>BROADCAST PREVIEW (XABAR KO'RINISHI)</b>\n\n"
+            f"Ushbu xabar jami <b>{total_u} ta</b> faol foydalanuvchiga yuboriladi.\n"
+            f"Quyida xabarning aynan o'zi ko'rsatilgan, tasdiqlash uchun yashil tugmani bosing 👇"
+        )
+        await message.answer(preview_text)
+        
+        # Xabarni nusxasini yuborib preview qilamiz
+        await message.copy_to(chat_id=message.chat.id, reply_markup=kb)
         await state.set_state(AdminState.confirming_broadcast)
 
 
 @router.callback_query(AdminState.confirming_broadcast, F.data == "broadcast_confirm_yes")
 async def admin_broadcast_send(callback: CallbackQuery, state: FSMContext):
     data = await state.get_data()
-    broadcast_text = data.get("text")
+    msg_id = data.get("broadcast_message_id")
+    chat_id = data.get("broadcast_chat_id")
     await state.clear()
     
     async with AsyncSessionLocal() as session:
@@ -145,15 +152,29 @@ async def admin_broadcast_send(callback: CallbackQuery, state: FSMContext):
         sent_count = 0
         total_count = len(all_users)
         
-        await callback.message.edit_text("📢 Xabar yuborilmoqda... Iltimos kuting...")
+        try:
+            await callback.message.delete()
+        except Exception:
+            pass
+            
+        status_msg = await callback.message.answer("📢 Xabar yuborilmoqda... Iltimos kuting...")
         
         for u in all_users:
             try:
-                await callback.bot.send_message(chat_id=u.id, text=broadcast_text)
+                await callback.bot.copy_message(
+                    chat_id=u.id,
+                    from_chat_id=chat_id,
+                    message_id=msg_id
+                )
                 sent_count += 1
             except Exception:
                 pass
                 
+        try:
+            await status_msg.delete()
+        except Exception:
+            pass
+            
         done_text = get_msg(user.language, "broadcast_done").format(
             sent=sent_count,
             total=total_count
@@ -295,7 +316,21 @@ async def admin_confirm_payment_handler(callback: CallbackQuery):
             return
             
         # To'lovni tasdiqlash (tanga qo'shish bilan birga)
-        await confirm_manual_payment(session, payment_id)
+        payment, referrer_id = await confirm_manual_payment(session, payment_id)
+        
+        if referrer_id:
+            try:
+                from bot.database.queries import get_user
+                referred_user = await get_user(session, payment.user_id)
+                friend_name = referred_user.full_name or "Do'stingiz" if referred_user else "Do'stingiz"
+                ref_text = (
+                    "🎁 <b>Do'stingiz tanga sotib oldi!</b>\n\n"
+                    f"{friend_name} taklif havolangiz orqali kirib, tanga sotib oldi.\n"
+                    "Sizga <b>+20 🪙 bonus tanga</b> taqdim etildi!"
+                )
+                await callback.bot.send_message(chat_id=referrer_id, text=ref_text)
+            except Exception:
+                pass
         
         # Foydalanuvchini xabardor qilish
         try:

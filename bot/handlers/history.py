@@ -41,6 +41,13 @@ async def history_message_handler(message: Message):
     await show_gallery_page(message, message.from_user.id, index=0, edit_mode=False)
 
 
+@router.callback_query(F.data.startswith("history_"))
+async def history_inline_callback_handler(callback: CallbackQuery):
+    index = int(callback.data.split("_")[1])
+    await show_gallery_page(callback.message, callback.from_user.id, index=index, edit_mode=True)
+    await callback.answer()
+
+
 @router.callback_query(F.data.startswith("hist_view_"))
 async def history_callback_handler(callback: CallbackQuery):
     index = int(callback.data.split("_")[2])

@@ -35,15 +35,16 @@ async def start_handler(message: Message, command: CommandObject):
                 # Referral munosabatini yaratish
                 ref_record = await create_referral(session, referrer.id, user.id)
                 if ref_record:
-                    # Ikkala tomonga 20 tangadan taqdim etamiz va tasdiqlaymiz
-                    await give_referral_bonus(session, ref_record.id)
+                    # Yangi foydalanuvchiga taklif qiluvchi ID-sini bog'lash
+                    user.referred_by = referrer.id
+                    await session.commit()
                     try:
-                        # Taklif qilgan do'stini xabardor qilish
+                        # Taklif qilgan do'stini ogohlantirish xabari
                         friend_name = user.full_name or "Yangi do'st"
                         ref_text = (
-                            "🎁 <b>Do'stingiz qo'shildi!</b>\n\n"
-                            f"{friend_name} taklif havolangiz orqali kirdi.\n"
-                            "Ikkalangizga ham <b>+20 🪙 bonus tanga</b> taqdim etildi!"
+                            "👥 <b>Yangi do'st taklif qilindi!</b>\n\n"
+                            f"<b>{friend_name}</b> taklif havolangiz orqali kirdi.\n"
+                            "Do'stingiz botdan ilk bor tanga sotib olganida, sizga <b>+20 🪙 bonus tanga</b> taqdim etiladi! 🎁"
                         )
                         await message.bot.send_message(chat_id=referrer.id, text=ref_text)
                     except Exception:
@@ -59,8 +60,6 @@ async def start_handler(message: Message, command: CommandObject):
             )
             await message.answer(text, reply_markup=language_select_keyboard())
         else:
-            await message.answer("🎬 <b>Bosh menyu yuklanmoqda...</b>", reply_markup=main_reply_keyboard())
-            
             text = get_msg(user.language, "main_menu").format(
                 tangas=user.tangas,
                 total_videos=user.total_videos,
@@ -79,11 +78,6 @@ async def set_lang_callback(callback: CallbackQuery):
         if not user.free_used:
             await add_tangas(session, callback.from_user.id, 50)
             await mark_free_used(session, callback.from_user.id)
-        
-        await callback.message.answer(
-            "🚀 <b>Menyular faollashtirildi!</b>", 
-            reply_markup=main_reply_keyboard()
-        )
         
         welcome_text = get_msg(lang, "start")
         await callback.message.edit_text(welcome_text, reply_markup=main_inline_keyboard())

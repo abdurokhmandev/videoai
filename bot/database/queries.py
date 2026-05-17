@@ -439,33 +439,65 @@ async def get_payment_by_provider_id(
     return result.scalar_one_or_none()
 
 
-async def confirm_payment(session: AsyncSession, payment_id: int):
+async def check_and_apply_referral_bonus(session: AsyncSession, referred_id: int) -> Optional[int]:
+    """
+    Foydalanuvchi tanga sotib olganida uni taklif qilgan do'stiga tanga berish.
+    Taklif qilgan do'stining ID-sini qaytaradi (xabarnoma yuborish uchun).
+    """
+    result = await session.execute(
+        select(Referral).where(
+            and_(
+                Referral.referred_id == referred_id,
+                Referral.bonus_given == False
+            )
+        )
+    )
+    ref = result.scalar_one_or_none()
+    if ref:
+        ref.bonus_given = True
+        # Faqat taklif qilgan (referrer) foydalanuvchiga bonus 20 tanga beriladi
+        await add_tangas(session, ref.referrer_id, 20)
+        return ref.referrer_id
+    return None
+
+
+async def confirm_payment(session: AsyncSession, payment_id: int) -> Tuple[Optional[Payment], Optional[int]]:
     result = await session.execute(
         select(Payment).where(Payment.id == payment_id)
     )
     payment = result.scalar_one_or_none()
+    referrer_id = None
     if payment:
         payment.status = "confirmed"
         payment.confirmed_at = func.now()
         # Add tangas to the user
         await add_tangas(session, payment.user_id, payment.amount_tangas)
+        
+        # Referral bonusni tekshirish va berish
+        referrer_id = await check_and_apply_referral_bonus(session, payment.user_id)
+        
         await session.commit()
-    return payment
+    return payment, referrer_id
 
 
-async def confirm_manual_payment(session: AsyncSession, payment_id: int):
+async def confirm_manual_payment(session: AsyncSession, payment_id: int) -> Tuple[Optional[Payment], Optional[int]]:
     result = await session.execute(
         select(Payment).where(Payment.id == payment_id)
     )
     payment = result.scalar_one_or_none()
+    referrer_id = None
     if payment:
         payment.status = "confirmed"
         payment.admin_confirmed = True
         payment.confirmed_at = func.now()
         # Add tangas to the user
         await add_tangas(session, payment.user_id, payment.amount_tangas)
+        
+        # Referral bonusni tekshirish va berish
+        referrer_id = await check_and_apply_referral_bonus(session, payment.user_id)
+        
         await session.commit()
-    return payment
+    return payment, referrer_id
 
 
 async def cancel_payment(session: AsyncSession, provider_tx_id: str):
