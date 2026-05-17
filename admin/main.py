@@ -417,3 +417,120 @@ async def api_adjust_balance(
             return {"status": "success", "new_balance": user.tangas}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.get("/api/users")
+async def api_users(
+    skip: int = 0, limit: int = 50,
+    username: str = Depends(check_admin_credentials)
+):
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(
+            select(User).order_by(desc(User.created_at)).offset(skip).limit(limit)
+        )
+        users = result.scalars().all()
+        return [{
+            "id": u.id,
+            "full_name": u.full_name,
+            "username": u.username,
+            "tangas": u.tangas,
+            "total_videos": u.total_videos,
+            "created_at": u.created_at.strftime('%Y-%m-%d %H:%M') if u.created_at else None
+        } for u in users]
+
+
+@app.get("/api/transactions")
+async def api_transactions(
+    skip: int = 0, limit: int = 50,
+    username: str = Depends(check_admin_credentials)
+):
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(
+            select(Payment).order_by(desc(Payment.created_at)).offset(skip).limit(limit)
+        )
+        payments = result.scalars().all()
+        return [{
+            "id": p.id,
+            "user_id": p.user_id,
+            "amount_tangas": p.amount_tangas,
+            "package": p.package,
+            "provider": p.provider,
+            "status": p.status,
+            "created_at": p.created_at.strftime('%Y-%m-%d %H:%M') if p.created_at else None
+        } for p in payments]
+
+
+@app.get("/api/videos")
+async def api_videos(
+    skip: int = 0, limit: int = 50,
+    username: str = Depends(check_admin_credentials)
+):
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(
+            select(VideoGeneration).order_by(desc(VideoGeneration.created_at)).offset(skip).limit(limit)
+        )
+        videos = result.scalars().all()
+        return [{
+            "id": v.id,
+            "user_id": v.user_id,
+            "prompt": v.prompt,
+            "video_url": v.video_url,
+            "status": v.status,
+            "api_provider": v.api_provider,
+            "created_at": v.created_at.strftime('%Y-%m-%d %H:%M') if v.created_at else None
+        } for v in videos]
+
+
+@app.get("/api/top-users")
+async def api_top_users(
+    limit: int = 10,
+    username: str = Depends(check_admin_credentials)
+):
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(
+            select(User).order_by(desc(User.total_spent), desc(User.tangas)).limit(limit)
+        )
+        users = result.scalars().all()
+        return [{
+            "id": u.id,
+            "full_name": u.full_name,
+            "username": u.username,
+            "tangas": u.tangas,
+            "total_spent": u.total_spent,
+            "total_videos": u.total_videos
+        } for u in users]
+
+
+@app.post("/api/broadcast")
+async def api_broadcast(
+    request: Request,
+    username: str = Depends(check_admin_credentials)
+):
+    try:
+        data = await request.json()
+        text = data.get("text")
+        if not text:
+            raise HTTPException(status_code=400, detail="Xabar matni bo'sh")
+            
+        async with AsyncSessionLocal() as session:
+            result = await session.execute(select(User))
+            all_users = result.scalars().all()
+            
+        sent_count = 0
+        from aiogram import Bot
+        from aiogram.client.default import DefaultBotProperties
+        from aiogram.enums import ParseMode
+        
+        temp_bot = Bot(token=settings.BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+        
+        for u in all_users:
+            try:
+                await temp_bot.send_message(chat_id=u.id, text=text)
+                sent_count += 1
+            except Exception:
+                pass
+                
+        await temp_bot.session.close()
+        return {"status": "success", "sent_count": sent_count, "total": len(all_users)}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))

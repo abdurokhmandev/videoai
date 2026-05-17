@@ -453,10 +453,10 @@ async def get_payment_by_provider_id(
     return result.scalar_one_or_none()
 
 
-async def check_and_apply_referral_bonus(session: AsyncSession, referred_id: int) -> Optional[int]:
+async def check_and_apply_referral_bonus(session: AsyncSession, referred_id: int, purchased_amount: int) -> Tuple[Optional[int], int]:
     """
     Foydalanuvchi tanga sotib olganida uni taklif qilgan do'stiga tanga berish.
-    Taklif qilgan do'stining ID-sini qaytaradi (xabarnoma yuborish uchun).
+    Taklif qilgan do'stining ID-sini va berilgan bonus miqdorini qaytaradi.
     """
     result = await session.execute(
         select(Referral).where(
@@ -469,18 +469,31 @@ async def check_and_apply_referral_bonus(session: AsyncSession, referred_id: int
     ref = result.scalar_one_or_none()
     if ref:
         ref.bonus_given = True
-        # Faqat taklif qilgan (referrer) foydalanuvchiga bonus 20 tanga beriladi
-        await add_tangas(session, ref.referrer_id, 20)
-        return ref.referrer_id
-    return None
+        
+        # Dinamik bonus hisoblash
+        bonus = 0
+        if purchased_amount == 60:
+            bonus = 15
+        elif purchased_amount == 180:
+            bonus = 25
+        elif purchased_amount == 450:
+            bonus = 45
+        elif purchased_amount >= 1000:
+            bonus = 110
+            
+        if bonus > 0:
+            await add_tangas(session, ref.referrer_id, bonus)
+            return ref.referrer_id, bonus
+    return None, 0
 
 
-async def confirm_payment(session: AsyncSession, payment_id: int) -> Tuple[Optional[Payment], Optional[int]]:
+async def confirm_payment(session: AsyncSession, payment_id: int) -> Tuple[Optional[Payment], Optional[int], int]:
     result = await session.execute(
         select(Payment).where(Payment.id == payment_id)
     )
     payment = result.scalar_one_or_none()
     referrer_id = None
+    bonus_amount = 0
     if payment:
         payment.status = "confirmed"
         payment.confirmed_at = func.now()
@@ -488,18 +501,19 @@ async def confirm_payment(session: AsyncSession, payment_id: int) -> Tuple[Optio
         await add_tangas(session, payment.user_id, payment.amount_tangas)
         
         # Referral bonusni tekshirish va berish
-        referrer_id = await check_and_apply_referral_bonus(session, payment.user_id)
+        referrer_id, bonus_amount = await check_and_apply_referral_bonus(session, payment.user_id, payment.amount_tangas)
         
         await session.commit()
-    return payment, referrer_id
+    return payment, referrer_id, bonus_amount
 
 
-async def confirm_manual_payment(session: AsyncSession, payment_id: int) -> Tuple[Optional[Payment], Optional[int]]:
+async def confirm_manual_payment(session: AsyncSession, payment_id: int) -> Tuple[Optional[Payment], Optional[int], int]:
     result = await session.execute(
         select(Payment).where(Payment.id == payment_id)
     )
     payment = result.scalar_one_or_none()
     referrer_id = None
+    bonus_amount = 0
     if payment:
         payment.status = "confirmed"
         payment.admin_confirmed = True
@@ -508,10 +522,10 @@ async def confirm_manual_payment(session: AsyncSession, payment_id: int) -> Tupl
         await add_tangas(session, payment.user_id, payment.amount_tangas)
         
         # Referral bonusni tekshirish va berish
-        referrer_id = await check_and_apply_referral_bonus(session, payment.user_id)
+        referrer_id, bonus_amount = await check_and_apply_referral_bonus(session, payment.user_id, payment.amount_tangas)
         
         await session.commit()
-    return payment, referrer_id
+    return payment, referrer_id, bonus_amount
 
 
 async def cancel_payment(session: AsyncSession, provider_tx_id: str):

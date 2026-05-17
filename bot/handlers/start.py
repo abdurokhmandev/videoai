@@ -37,6 +37,8 @@ async def start_handler(message: Message, command: CommandObject):
                 if ref_record:
                     # Yangi foydalanuvchiga taklif qiluvchi ID-sini bog'lash
                     user.referred_by = referrer.id
+                    # 5 tanga darhol berish
+                    await add_tangas(session, referrer.id, 5)
                     await session.commit()
                     try:
                         # Taklif qilgan do'stini ogohlantirish xabari
@@ -44,7 +46,8 @@ async def start_handler(message: Message, command: CommandObject):
                         ref_text = (
                             "👥 <b>Yangi do'st taklif qilindi!</b>\n\n"
                             f"<b>{friend_name}</b> taklif havolangiz orqali kirdi.\n"
-                            "Do'stingiz botdan ilk bor tanga sotib olganida, sizga <b>+20 🪙 bonus tanga</b> taqdim etiladi! 🎁"
+                            "🎁 Sizga darhol <b>+5 🪙 tanga</b> berildi!\n\n"
+                            "Do'stingiz botdan ilk bor tanga sotib olganida, xarid miqdoriga qarab sizga qo'shimcha <b>+110 tangagacha bonus</b> taqdim etiladi! 💸"
                         )
                         await message.bot.send_message(chat_id=referrer.id, text=ref_text)
                     except Exception:

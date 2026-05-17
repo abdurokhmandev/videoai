@@ -316,9 +316,9 @@ async def admin_confirm_payment_handler(callback: CallbackQuery):
             return
             
         # To'lovni tasdiqlash (tanga qo'shish bilan birga)
-        payment, referrer_id = await confirm_manual_payment(session, payment_id)
+        payment, referrer_id, bonus_amount = await confirm_manual_payment(session, payment_id)
         
-        if referrer_id:
+        if referrer_id and bonus_amount > 0:
             try:
                 from bot.database.queries import get_user
                 referred_user = await get_user(session, payment.user_id)
@@ -326,7 +326,7 @@ async def admin_confirm_payment_handler(callback: CallbackQuery):
                 ref_text = (
                     "🎁 <b>Do'stingiz tanga sotib oldi!</b>\n\n"
                     f"{friend_name} taklif havolangiz orqali kirib, tanga sotib oldi.\n"
-                    "Sizga <b>+20 🪙 bonus tanga</b> taqdim etildi!"
+                    f"Sizga <b>+{bonus_amount} 🪙 bonus tanga</b> taqdim etildi!"
                 )
                 await callback.bot.send_message(chat_id=referrer_id, text=ref_text)
             except Exception:

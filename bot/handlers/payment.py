@@ -76,15 +76,15 @@ async def stars_successful_payment(message: Message):
             package=package_key,
             provider_tx_id=message.successful_payment.telegram_payment_charge_id
         )
-        payment, referrer_id = await confirm_payment(session, payment.id)
+        payment, referrer_id, bonus_amount = await confirm_payment(session, payment.id)
         
-        if referrer_id:
+        if referrer_id and bonus_amount > 0:
             try:
                 friend_name = message.from_user.full_name or "Do'stingiz"
                 ref_text = (
                     "🎁 <b>Do'stingiz tanga sotib oldi!</b>\n\n"
                     f"{friend_name} taklif havolangiz orqali kirib, tanga sotib oldi.\n"
-                    "Sizga <b>+20 🪙 bonus tanga</b> taqdim etildi!"
+                    f"Sizga <b>+{bonus_amount} 🪙 bonus tanga</b> taqdim etildi!"
                 )
                 await message.bot.send_message(chat_id=referrer_id, text=ref_text)
             except Exception:
