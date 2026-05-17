@@ -205,7 +205,7 @@ async def video_confirm_handler(callback: CallbackQuery, state: FSMContext):
                 
         # Generatsiyani yakunlash (Simulyatsiya uchun bitta tayyor chiroyli video linki)
         # Haqiqiy API-ni ulasangiz, bu yerda SiliconFlow yoki AtlasCloud xizmati chaqiriladi
-        sample_video_url = "https://assets.mixkit.co/videos/preview/mixkit-stars-in-space-background-1611-large.mp4"
+        sample_video_url = "https://www.w3schools.com/html/mov_bbb.mp4"
         
         await complete_generation(session, generation.id, sample_video_url, "job_test_1234")
         await update_user_stats(session, user.id, Decimal(str(price)))
@@ -222,8 +222,17 @@ async def video_confirm_handler(callback: CallbackQuery, state: FSMContext):
         )
         
         await callback.message.delete()
-        await callback.message.answer_video(
-            video=sample_video_url,
-            caption=done_text,
-            reply_markup=after_video_keyboard(user_lang)
-        )
+        
+        try:
+            await callback.message.answer_video(
+                video=sample_video_url,
+                caption=done_text,
+                reply_markup=after_video_keyboard(user_lang)
+            )
+        except Exception:
+            # Agar Telegram serveri video URLni tortolmasa, fallback havola bilan chiroyli matn yuboramiz
+            fallback_text = done_text + f"\n\n🔗 <b>Video yuklab olish havolasi:</b>\n{sample_video_url}"
+            await callback.message.answer(
+                fallback_text,
+                reply_markup=after_video_keyboard(user_lang)
+            )
