@@ -10,12 +10,12 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from bot.config import Settings, settings
 from bot.database.queries import init_db
 from bot.handlers.start import router as start_router
-# from bot.handlers.video import router as video_router
-# from bot.handlers.payment import router as payment_router
-# from bot.handlers.balance import router as balance_router
-# from bot.handlers.referral import router as referral_router
-# from bot.handlers.settings import router as settings_router
-# from bot.handlers.admin import router as admin_router
+from bot.handlers.video import router as video_router
+from bot.handlers.payment import router as payment_router
+from bot.handlers.balance import router as balance_router
+from bot.handlers.referral import router as referral_router
+from bot.handlers.settings import router as settings_router
+from bot.handlers.admin import router as admin_router
 
 
 def setup_logging() -> None:
@@ -39,12 +39,12 @@ def create_dispatcher(settings: Settings) -> Dispatcher:
     dp.message.outer_middleware(MaintenanceMiddleware())
     
     dp.include_router(start_router)
-    # dp.include_router(video_router)
-    # dp.include_router(payment_router)
-    # dp.include_router(balance_router)
-    # dp.include_router(referral_router)
-    # dp.include_router(settings_router)
-    # dp.include_router(admin_router)
+    dp.include_router(video_router)
+    dp.include_router(payment_router)
+    dp.include_router(balance_router)
+    dp.include_router(referral_router)
+    dp.include_router(settings_router)
+    dp.include_router(admin_router)
     return dp
 
 
