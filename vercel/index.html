@@ -73,7 +73,6 @@
         .btn-red    { background: rgba(239,68,68,0.1); color: #f87171; border: 1px solid rgba(239,68,68,0.25); font-size: 12px; padding: 5px 12px; border-radius: 7px; cursor: pointer; transition: all 0.15s; }
         .btn-red:hover { background: rgba(239,68,68,0.22); }
         #toast { position: fixed; bottom: 28px; right: 28px; z-index: 9999; padding: 14px 22px; border-radius: 12px; font-weight: 600; font-size: 14px; box-shadow: 0 8px 30px rgba(0,0,0,0.4); transition: all 0.3s; pointer-events: none; }
-        #modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 500; display: flex; align-items: center; justify-content: center; }
         .video-card { background: rgba(21,28,44,0.7); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; overflow: hidden; transition: transform 0.2s, border-color 0.2s; }
         .video-card:hover { transform: translateY(-3px); border-color: rgba(99,102,241,0.4); }
         #login-screen { position: fixed; inset: 0; background: #05070C; z-index: 1000; display: flex; align-items: center; justify-content: center; }
@@ -111,17 +110,6 @@
 <!-- Toast notification -->
 <div id="toast" class="hidden"></div>
 
-<!-- Confirm Modal -->
-<div id="modal-overlay" class="hidden">
-    <div class="glass rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
-        <h3 id="modal-title" class="text-xl font-bold text-white mb-3"></h3>
-        <p id="modal-body" class="text-gray-400 mb-6"></p>
-        <div class="flex gap-3 justify-end">
-            <button onclick="closeModal()" class="px-5 py-2 rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700 font-medium transition-colors">Bekor qilish</button>
-            <button id="modal-confirm-btn" class="btn-primary px-6 py-2">Tasdiqlash</button>
-        </div>
-    </div>
-</div>
 
 <!-- Sidebar -->
 <aside class="w-60 glass h-full flex flex-col border-r border-gray-800/60 z-10 shadow-2xl shrink-0">
@@ -740,28 +728,20 @@
         }, 100);
     }
 
-    function confirmPayment(paymentId) {
-        showModal("To'lovni tasdiqlash", `To'lov #${paymentId} ni tasdiqlaysizmi? Foydalanuvchi hisobiga tanga qo'shiladi.`,
-            async () => {
-                const data = await api(`/api/payments/${paymentId}/confirm`, {method: 'POST'});
-                if (data) { showToast("✅ To'lov tasdiqlandi!", 'green'); loadPendingPayments(); }
-            }
-        );
+    async function confirmPayment(paymentId) {
+        const data = await api(`/api/payments/${paymentId}/confirm`, {method: 'POST'});
+        if (data) { showToast("✅ To'lov tasdiqlandi!", 'green'); loadPendingPayments(); }
     }
 
-    function rejectPayment(paymentId) {
-        showModal("To'lovni rad etish", `To'lov #${paymentId} ni rad etasizmi?`,
-            async () => {
-                const data = await api(`/api/payments/${paymentId}/reject`, {method: 'POST'});
-                if (data) { showToast("❌ To'lov rad etildi", 'amber'); loadPendingPayments(); }
-            }
-        );
+    async function rejectPayment(paymentId) {
+        const data = await api(`/api/payments/${paymentId}/reject`, {method: 'POST'});
+        if (data) { showToast("❌ To'lov rad etildi", 'amber'); loadPendingPayments(); }
     }
 
     function confirmBroadcast() {
         const text = document.getElementById('broadcast-text').value.trim();
         if (!text) return showToast('Xabar matni bo\'sh!', 'red');
-        showModal('Broadcast yuborish', 'Ushbu xabar barcha foydalanuvchilarga yuboriladi. Davom etasizmi?', () => sendBroadcast(text));
+        sendBroadcast(text);
     }
 
     async function sendBroadcast(text) {
@@ -820,16 +800,6 @@
         t._timer = setTimeout(() => t.classList.add('hidden'), 3500);
     }
 
-    let modalCallback = null;
-    function showModal(title, body, onConfirm) {
-        document.getElementById('modal-title').textContent = title;
-        document.getElementById('modal-body').textContent = body;
-        modalCallback = onConfirm;
-        document.getElementById('modal-overlay').classList.remove('hidden');
-        document.getElementById('modal-confirm-btn').onclick = () => { closeModal(); if(modalCallback) modalCallback(); };
-    }
-    function closeModal() { document.getElementById('modal-overlay').classList.add('hidden'); modalCallback = null; }
-    document.getElementById('modal-overlay').addEventListener('click', e => { if (e.target === document.getElementById('modal-overlay')) closeModal(); });
 
     // Enter on login
     document.getElementById('login-pass').addEventListener('keydown', e => { if(e.key === 'Enter') doLogin(); });
