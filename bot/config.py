@@ -3,6 +3,17 @@ from typing import List, Dict, Any
 import os
 
 
+def _fix_database_url(url: str) -> str:
+    if url.startswith("postgresql://") or url.startswith("postgres://"):
+        url = url.replace("postgresql://", "postgresql+asyncpg://", 1).replace("postgres://", "postgresql+asyncpg://", 1)
+        if "sslmode=disable" in url:
+            url = url.replace("?sslmode=disable", "").replace("&sslmode=disable", "").replace("sslmode=disable&", "")
+        elif "sslmode=" in url:
+            import re
+            url = re.sub(r'[?&]sslmode=[^&]*', '', url)
+    return url
+
+
 class Settings(BaseSettings):
     # Bot
     BOT_TOKEN: str = ""
@@ -11,6 +22,9 @@ class Settings(BaseSettings):
 
     # Database
     DATABASE_URL: str = "sqlite+aiosqlite:///./bot.db"
+
+    def model_post_init(self, __context) -> None:
+        object.__setattr__(self, 'DATABASE_URL', _fix_database_url(self.DATABASE_URL))
 
     # fal.ai
     FAL_KEY: str = ""
