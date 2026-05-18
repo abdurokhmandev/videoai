@@ -3,11 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VideoAI CRM — Admin</title>
-    <!-- Fonts -->
+    <title>VideoAI CRM — Admin Panel</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -17,14 +15,6 @@
                     fontFamily: {
                         sans: ['Outfit', 'sans-serif'],
                         mono: ['DM Mono', 'monospace'],
-                    },
-                    colors: {
-                        brand: {
-                            dark: '#0B0F19',
-                            card: '#151C2C',
-                            border: 'rgba(255,255,255,0.08)',
-                            accent: '#6366F1',
-                        }
                     }
                 }
             }
@@ -33,504 +23,816 @@
     <style>
         body {
             background-color: #05070C;
-            background-image: 
-                radial-gradient(at 10% 20%, rgba(99, 102, 241, 0.1) 0px, transparent 50%),
-                radial-gradient(at 90% 80%, rgba(59, 130, 246, 0.1) 0px, transparent 50%);
+            background-image:
+                radial-gradient(at 10% 20%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
+                radial-gradient(at 90% 80%, rgba(59, 130, 246, 0.12) 0px, transparent 50%);
             background-attachment: fixed;
             color: #E2E8F0;
         }
         .glass {
-            background: rgba(21, 28, 44, 0.6);
+            background: rgba(21, 28, 44, 0.65);
             backdrop-filter: blur(12px);
-            border: 1px solid var(--brand-border);
+            border: 1px solid rgba(255,255,255,0.07);
         }
-        .nav-item {
-            transition: all 0.2s;
-        }
-        .nav-item.active {
-            background: rgba(99, 102, 241, 0.15);
-            border-left: 3px solid #6366F1;
-            color: white;
-        }
-        .nav-item:hover:not(.active) {
-            background: rgba(255,255,255,0.05);
-        }
-        .tab-content {
-            display: none;
-            animation: fadeIn 0.3s ease;
-        }
-        .tab-content.active {
-            display: block;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        .nav-item { transition: all 0.2s; border-left: 3px solid transparent; }
+        .nav-item.active { background: rgba(99,102,241,0.15); border-left-color: #6366F1; color: white; }
+        .nav-item:hover:not(.active) { background: rgba(255,255,255,0.05); }
+        .tab-content { display: none; animation: fadeIn 0.25s ease; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); color: #94A3B8; font-weight: 500; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; }
-        td { padding: 16px 12px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 14px; }
-        tr:hover td { background: rgba(255,255,255,0.02); }
+        th { text-align: left; padding: 11px 14px; border-bottom: 1px solid rgba(255,255,255,0.08); color: #94A3B8; font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
+        td { padding: 14px; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 13.5px; }
+        tr:hover td { background: rgba(255,255,255,0.025); }
+        .badge { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 99px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; }
+        .badge-green { background: rgba(16,185,129,0.12); color: #34d399; }
+        .badge-amber { background: rgba(245,158,11,0.12); color: #fbbf24; }
+        .badge-red   { background: rgba(239,68,68,0.1);  color: #f87171; }
+        .badge-blue  { background: rgba(99,102,241,0.12); color: #818cf8; }
+        .badge-gray  { background: rgba(100,116,139,0.15); color: #94a3b8; }
+        input, textarea, select {
+            background: rgba(15,20,35,0.7);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            border-radius: 10px;
+            padding: 10px 14px;
+            outline: none;
+            transition: border-color 0.2s;
+            width: 100%;
+        }
+        input:focus, textarea:focus, select:focus { border-color: #6366F1; }
+        input::placeholder, textarea::placeholder { color: #4B5563; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+        .btn-primary { background: #6366F1; color: white; font-weight: 600; padding: 10px 22px; border-radius: 10px; cursor: pointer; transition: all 0.2s; border: none; }
+        .btn-primary:hover { background: #5254cc; transform: translateY(-1px); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .btn-green  { background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3); font-size: 12px; padding: 5px 12px; border-radius: 7px; cursor: pointer; transition: all 0.15s; }
+        .btn-green:hover { background: rgba(16,185,129,0.3); }
+        .btn-red    { background: rgba(239,68,68,0.1); color: #f87171; border: 1px solid rgba(239,68,68,0.25); font-size: 12px; padding: 5px 12px; border-radius: 7px; cursor: pointer; transition: all 0.15s; }
+        .btn-red:hover { background: rgba(239,68,68,0.22); }
+        #toast { position: fixed; bottom: 28px; right: 28px; z-index: 9999; padding: 14px 22px; border-radius: 12px; font-weight: 600; font-size: 14px; box-shadow: 0 8px 30px rgba(0,0,0,0.4); transition: all 0.3s; pointer-events: none; }
+        #modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 500; display: flex; align-items: center; justify-content: center; }
+        .video-card { background: rgba(21,28,44,0.7); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; overflow: hidden; transition: transform 0.2s, border-color 0.2s; }
+        .video-card:hover { transform: translateY(-3px); border-color: rgba(99,102,241,0.4); }
+        #login-screen { position: fixed; inset: 0; background: #05070C; z-index: 1000; display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden text-sm">
 
-    <!-- Sidebar -->
-    <aside class="w-64 glass h-full flex flex-col border-r border-gray-800 z-10 shadow-2xl relative">
-        <div class="p-6 border-b border-gray-800">
-            <h1 class="text-xl font-bold bg-gradient-to-r from-indigo-400 to-blue-400 bg-clip-text text-transparent flex items-center gap-2">
-                <svg class="w-6 h-6 text-indigo-500" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a8 8 0 100 16 8 8 0 000-16zm0 14a6 6 0 110-12 6 6 0 010 12z"/></svg>
-                AI Videochi
-            </h1>
-            <p class="text-xs text-gray-500 mt-1 font-mono tracking-wider uppercase">CRM Panel</p>
+<!-- Login Screen -->
+<div id="login-screen">
+    <div class="glass rounded-2xl p-10 w-full max-w-sm mx-4 shadow-2xl text-center">
+        <div class="w-14 h-14 bg-indigo-500/15 rounded-2xl flex items-center justify-center mx-auto mb-5">
+            <svg class="w-7 h-7 text-indigo-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/></svg>
         </div>
-        
-        <nav class="flex-1 py-4 flex flex-col gap-1 overflow-y-auto">
-            <button onclick="switchTab('dashboard')" class="nav-item active flex items-center gap-3 px-6 py-3 text-gray-400 font-medium text-left">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
-                Dashboard
-            </button>
-            <button onclick="switchTab('users')" class="nav-item flex items-center gap-3 px-6 py-3 text-gray-400 font-medium text-left">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-                Foydalanuvchilar
-            </button>
-            <button onclick="switchTab('transactions')" class="nav-item flex items-center gap-3 px-6 py-3 text-gray-400 font-medium text-left">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                Tranzaksiyalar
-            </button>
-            <button onclick="switchTab('videos')" class="nav-item flex items-center gap-3 px-6 py-3 text-gray-400 font-medium text-left">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-                Videolar Galereyasi
-            </button>
-            <button onclick="switchTab('top-users')" class="nav-item flex items-center gap-3 px-6 py-3 text-gray-400 font-medium text-left">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
-                VIP Foydalanuvchilar
-            </button>
-            <button onclick="switchTab('broadcast')" class="nav-item flex items-center gap-3 px-6 py-3 text-gray-400 font-medium text-left">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
-                Xabar Tarqatish
-            </button>
-        </nav>
-        
-        <div class="p-6 border-t border-gray-800">
-            <button onclick="logout()" class="w-full py-2.5 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 font-medium transition-colors border border-red-500/20">
-                Tizimdan chiqish
-            </button>
-        </div>
-    </aside>
-
-    <!-- Main Content -->
-    <main class="flex-1 h-full overflow-y-auto relative">
-        <header class="sticky top-0 z-10 glass border-b border-gray-800 px-8 py-5 flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-white mb-1">AI Videochi</h1>
+        <p class="text-gray-500 text-xs mb-7 uppercase tracking-widest font-mono">CRM Admin Panel</p>
+        <div class="space-y-3 text-left">
             <div>
-                <h2 id="page-title" class="text-2xl font-bold text-white">Dashboard</h2>
-                <p id="page-subtitle" class="text-gray-400 text-sm mt-1">Tizimning umumiy holati va tezkor ma'lumotlar</p>
+                <label class="text-xs text-gray-400 mb-1.5 block">Server manzili (Railway URL)</label>
+                <input type="url" id="login-url" placeholder="https://videoai-production-xxx.up.railway.app" value="https://videoai-production-736c.up.railway.app">
             </div>
-            <div class="flex items-center gap-3">
-                <span class="relative flex h-3 w-3">
-                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-                </span>
-                <span class="text-emerald-400 font-medium tracking-wide">Live Server</span>
+            <div>
+                <label class="text-xs text-gray-400 mb-1.5 block">Admin username</label>
+                <input type="text" id="login-user" placeholder="admin">
             </div>
-        </header>
-
-        <div class="p-8 max-w-7xl mx-auto pb-24">
-            
-            <!-- DASHBOARD TAB -->
-            <div id="tab-dashboard" class="tab-content active">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    <!-- Cards will be populated by loadDashboard() -->
-                    <div class="glass rounded-xl p-6 relative overflow-hidden group">
-                        <div class="absolute top-0 right-0 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl group-hover:bg-indigo-500/20 transition-all"></div>
-                        <p class="text-gray-400 font-medium">Jami Userlar</p>
-                        <h3 class="text-3xl font-bold text-white mt-2" id="stat-users">...</h3>
-                    </div>
-                    <div class="glass rounded-xl p-6 relative overflow-hidden group">
-                        <div class="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition-all"></div>
-                        <p class="text-gray-400 font-medium">Bugungi Userlar</p>
-                        <h3 class="text-3xl font-bold text-white mt-2" id="stat-new-users">...</h3>
-                    </div>
-                    <div class="glass rounded-xl p-6 relative overflow-hidden group">
-                        <div class="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl group-hover:bg-blue-500/20 transition-all"></div>
-                        <p class="text-gray-400 font-medium">Bugun Videolar</p>
-                        <h3 class="text-3xl font-bold text-white mt-2" id="stat-videos">...</h3>
-                    </div>
-                    <div class="glass rounded-xl p-6 relative overflow-hidden group">
-                        <div class="absolute top-0 right-0 w-24 h-24 bg-amber-500/10 rounded-full blur-2xl group-hover:bg-amber-500/20 transition-all"></div>
-                        <p class="text-gray-400 font-medium">Jami Daromad</p>
-                        <h3 class="text-3xl font-bold text-white mt-2" id="stat-revenue">...</h3>
-                    </div>
-                </div>
-                
-                <div class="glass rounded-xl p-6 mt-8">
-                    <h3 class="text-lg font-bold text-white mb-4">Balansni tahrirlash</h3>
-                    <form onsubmit="adjustBalance(event)" class="flex gap-4 items-end">
-                        <div class="flex-1">
-                            <label class="block text-gray-400 mb-2">Foydalanuvchi ID</label>
-                            <input type="number" id="adj-uid" required class="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-indigo-500 transition-colors">
-                        </div>
-                        <div class="flex-1">
-                            <label class="block text-gray-400 mb-2">Qo'shiladigan/Olinadigan tanga miqdori (+ yoki -)</label>
-                            <input type="number" id="adj-amount" required class="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-indigo-500 transition-colors">
-                        </div>
-                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-6 py-2.5 rounded-lg transition-colors">
-                            Saqlash
-                        </button>
-                    </form>
-                </div>
+            <div>
+                <label class="text-xs text-gray-400 mb-1.5 block">Parol</label>
+                <input type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
             </div>
-
-            <!-- USERS TAB -->
-            <div id="tab-users" class="tab-content">
-                <div class="glass rounded-xl overflow-hidden">
-                    <div class="overflow-x-auto">
-                        <table class="w-full">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Ism familiya</th>
-                                    <th>Username</th>
-                                    <th>Balans</th>
-                                    <th>Videolar</th>
-                                    <th>Sana</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tbody-users">
-                                <!-- Data injected by JS -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- TRANSACTIONS TAB -->
-            <div id="tab-transactions" class="tab-content">
-                <div class="glass rounded-xl overflow-hidden">
-                    <div class="overflow-x-auto">
-                        <table class="w-full">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>User ID</th>
-                                    <th>Summa (Tanga)</th>
-                                    <th>Paket</th>
-                                    <th>Tizim</th>
-                                    <th>Holat</th>
-                                    <th>Sana</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tbody-transactions">
-                                <!-- Data injected by JS -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- VIDEOS TAB -->
-            <div id="tab-videos" class="tab-content">
-                <div class="glass rounded-xl overflow-hidden">
-                    <div class="overflow-x-auto">
-                        <table class="w-full">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>User ID</th>
-                                    <th>Prompt / Mode</th>
-                                    <th>Video Manzil</th>
-                                    <th>Holat</th>
-                                    <th>Sana</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tbody-videos">
-                                <!-- Data injected by JS -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- TOP USERS TAB -->
-            <div id="tab-top-users" class="tab-content">
-                <div class="glass rounded-xl overflow-hidden">
-                    <div class="overflow-x-auto">
-                        <table class="w-full">
-                            <thead>
-                                <tr>
-                                    <th>O'rin</th>
-                                    <th>ID</th>
-                                    <th>Ism</th>
-                                    <th>Balans</th>
-                                    <th>Jami Xarajat (Sum)</th>
-                                    <th>Videolar</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tbody-top-users">
-                                <!-- Data injected by JS -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- BROADCAST TAB -->
-            <div id="tab-broadcast" class="tab-content">
-                <div class="glass rounded-xl p-8 max-w-2xl mx-auto mt-10">
-                    <div class="mb-6">
-                        <div class="w-16 h-16 bg-indigo-500/10 rounded-full flex items-center justify-center mb-4">
-                            <svg class="w-8 h-8 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
-                        </div>
-                        <h3 class="text-2xl font-bold text-white">Xabar Tarqatish (Broadcast)</h3>
-                        <p class="text-gray-400 mt-2">Barcha mavjud va faol bot foydalanuvchilariga xabar yuborish. HTML taglardan foydalanishingiz mumkin.</p>
-                    </div>
-                    
-                    <form onsubmit="sendBroadcast(event)">
-                        <textarea id="broadcast-text" rows="6" required placeholder="Xabar matnini kiriting... (Masalan: <b>Salom</b> botimizda yangi aksiya!)" class="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors mb-6 font-mono text-sm"></textarea>
-                        
-                        <button type="submit" id="btn-broadcast" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 py-4 rounded-xl transition-all shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2">
-                            <span>Barchaga Tarqatish</span>
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-                        </button>
-                        <p id="broadcast-status" class="mt-4 text-center font-medium hidden"></p>
-                    </form>
-                </div>
-            </div>
-
+            <button onclick="doLogin()" class="btn-primary w-full mt-2">Kirish</button>
+            <p id="login-err" class="text-red-400 text-xs text-center hidden"></p>
         </div>
-    </main>
+    </div>
+</div>
 
-    <script>
-        // API Base configuration
-        // To'g'ridan-to'g'ri Railway orqali ma'lumotlarni olamiz
-        const API_BASE = "https://videoai-production-736c.up.railway.app";
+<!-- Toast notification -->
+<div id="toast" class="hidden"></div>
 
-        // Tab Switching Logic
-        const tabTitles = {
-            'dashboard': {title: 'Dashboard', sub: "Tizimning umumiy holati va tezkor ma'lumotlar"},
-            'users': {title: 'Foydalanuvchilar', sub: 'Botning barcha a\'zolari ro\'yxati'},
-            'transactions': {title: 'Tranzaksiyalar', sub: 'Stars va Humo/Uzcard to\'lovlari tarixi'},
-            'videos': {title: 'Videolar Galereyasi', sub: 'Yaratilgan barcha AI videolar kuzatuvi'},
-            'top-users': {title: 'VIP Foydalanuvchilar', sub: 'Eng ko\'p to\'lov qilgan faol mijozlar reytingi'},
-            'broadcast': {title: 'Xabar Tarqatish', sub: 'Tizimdagi barcha foydalanuvchilarga xabar jo\'natish'}
-        };
+<!-- Confirm Modal -->
+<div id="modal-overlay" class="hidden">
+    <div class="glass rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+        <h3 id="modal-title" class="text-xl font-bold text-white mb-3"></h3>
+        <p id="modal-body" class="text-gray-400 mb-6"></p>
+        <div class="flex gap-3 justify-end">
+            <button onclick="closeModal()" class="px-5 py-2 rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700 font-medium transition-colors">Bekor qilish</button>
+            <button id="modal-confirm-btn" class="btn-primary px-6 py-2">Tasdiqlash</button>
+        </div>
+    </div>
+</div>
 
-        function switchTab(tabId) {
-            // Update nav styles
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            event.currentTarget.classList.add('active');
-            
-            // Update content visibility
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.getElementById('tab-' + tabId).classList.add('active');
+<!-- Sidebar -->
+<aside class="w-60 glass h-full flex flex-col border-r border-gray-800/60 z-10 shadow-2xl shrink-0">
+    <div class="p-5 border-b border-gray-800/60">
+        <h1 class="text-lg font-bold bg-gradient-to-r from-indigo-400 to-blue-400 bg-clip-text text-transparent flex items-center gap-2">
+            <svg class="w-5 h-5 text-indigo-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/></svg>
+            AI Videochi
+        </h1>
+        <p class="text-xs text-gray-500 mt-0.5 font-mono tracking-wider uppercase">CRM Panel</p>
+    </div>
 
-            // Update Header
-            document.getElementById('page-title').innerText = tabTitles[tabId].title;
-            document.getElementById('page-subtitle').innerText = tabTitles[tabId].sub;
+    <nav class="flex-1 py-3 flex flex-col gap-0.5 overflow-y-auto px-2">
+        <button onclick="switchTab('dashboard',this)" class="nav-item active flex items-center gap-3 px-4 py-2.5 text-gray-400 font-medium text-left rounded-lg text-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+            Dashboard
+        </button>
+        <button onclick="switchTab('users',this)" class="nav-item flex items-center gap-3 px-4 py-2.5 text-gray-400 font-medium text-left rounded-lg text-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+            Foydalanuvchilar
+        </button>
+        <button onclick="switchTab('transactions',this)" class="nav-item flex items-center gap-3 px-4 py-2.5 text-gray-400 font-medium text-left rounded-lg text-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+            Tranzaksiyalar
+        </button>
+        <button onclick="switchTab('videos',this)" class="nav-item flex items-center gap-3 px-4 py-2.5 text-gray-400 font-medium text-left rounded-lg text-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+            Videolar Galereyasi
+        </button>
+        <button onclick="switchTab('pending-payments',this)" class="nav-item flex items-center gap-3 px-4 py-2.5 text-gray-400 font-medium text-left rounded-lg text-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+            Kutilayotgan To'lovlar
+            <span id="pending-badge" class="ml-auto bg-amber-500/20 text-amber-400 text-xs px-2 py-0.5 rounded-full hidden"></span>
+        </button>
+        <button onclick="switchTab('top-users',this)" class="nav-item flex items-center gap-3 px-4 py-2.5 text-gray-400 font-medium text-left rounded-lg text-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+            VIP Foydalanuvchilar
+        </button>
+        <button onclick="switchTab('broadcast',this)" class="nav-item flex items-center gap-3 px-4 py-2.5 text-gray-400 font-medium text-left rounded-lg text-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
+            Xabar Tarqatish
+        </button>
+        <button onclick="switchTab('reports',this)" class="nav-item flex items-center gap-3 px-4 py-2.5 text-gray-400 font-medium text-left rounded-lg text-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            Hisobotlar
+        </button>
+    </nav>
 
-            // Load data dynamically
-            if(tabId === 'dashboard') loadDashboard();
-            else if(tabId === 'users') loadUsers();
-            else if(tabId === 'transactions') loadTransactions();
-            else if(tabId === 'videos') loadVideos();
-            else if(tabId === 'top-users') loadTopUsers();
+    <div class="p-4 border-t border-gray-800/60 space-y-2">
+        <div class="text-xs text-gray-500 px-2 truncate" id="sidebar-url"></div>
+        <button onclick="doLogout()" class="w-full py-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 font-medium transition-colors text-xs border border-red-500/15">
+            Tizimdan chiqish
+        </button>
+    </div>
+</aside>
+
+<!-- Main -->
+<main class="flex-1 h-full overflow-y-auto">
+    <header class="sticky top-0 z-10 glass border-b border-gray-800/60 px-8 py-4 flex justify-between items-center">
+        <div>
+            <h2 id="page-title" class="text-xl font-bold text-white">Dashboard</h2>
+            <p id="page-subtitle" class="text-gray-400 text-xs mt-0.5">Tizimning umumiy holati</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <span class="relative flex h-2.5 w-2.5">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+            </span>
+            <span class="text-emerald-400 text-xs font-medium">Live</span>
+            <button onclick="refreshCurrent()" class="flex items-center gap-2 text-gray-400 hover:text-white text-xs bg-gray-800/60 hover:bg-gray-700/60 px-3 py-2 rounded-lg transition-all ml-2">
+                <svg id="refresh-icon" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                Yangilash
+            </button>
+        </div>
+    </header>
+
+    <div class="p-6 max-w-screen-xl mx-auto pb-16 space-y-6">
+
+        <!-- DASHBOARD TAB -->
+        <div id="tab-dashboard" class="tab-content active">
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div class="glass rounded-xl p-5 relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 w-20 h-20 bg-indigo-500/10 rounded-full blur-2xl group-hover:bg-indigo-500/20 transition-all"></div>
+                    <p class="text-gray-400 text-xs font-semibold uppercase tracking-wider">Jami Userlar</p>
+                    <h3 class="text-3xl font-bold text-white mt-2" id="stat-users">—</h3>
+                    <p class="text-indigo-400 text-xs mt-1.5">Bugun: +<span id="stat-new-users">0</span></p>
+                </div>
+                <div class="glass rounded-xl p-5 relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 w-20 h-20 bg-blue-500/10 rounded-full blur-2xl group-hover:bg-blue-500/20 transition-all"></div>
+                    <p class="text-gray-400 text-xs font-semibold uppercase tracking-wider">Jami Videolar</p>
+                    <h3 class="text-3xl font-bold text-white mt-2" id="stat-total-videos">—</h3>
+                    <p class="text-blue-400 text-xs mt-1.5">Bugun: <span id="stat-today-videos">0</span> ta</p>
+                </div>
+                <div class="glass rounded-xl p-5 relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 w-20 h-20 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition-all"></div>
+                    <p class="text-gray-400 text-xs font-semibold uppercase tracking-wider">Bugungi Daromad</p>
+                    <h3 class="text-2xl font-bold text-emerald-400 mt-2" id="stat-today-rev">—</h3>
+                    <p class="text-emerald-500/60 text-xs mt-1.5">so'm</p>
+                </div>
+                <div class="glass rounded-xl p-5 relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 w-20 h-20 bg-amber-500/10 rounded-full blur-2xl group-hover:bg-amber-500/20 transition-all"></div>
+                    <p class="text-gray-400 text-xs font-semibold uppercase tracking-wider">Umumiy Daromad</p>
+                    <h3 class="text-2xl font-bold text-amber-400 mt-2" id="stat-total-rev">—</h3>
+                    <p class="text-amber-500/60 text-xs mt-1.5">so'm</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div class="glass rounded-xl p-6">
+                    <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        Balansni o'zgartirish
+                    </h3>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-xs text-gray-400 mb-1.5 block">Foydalanuvchi Telegram ID</label>
+                            <input type="number" id="adj-uid" placeholder="Masalan: 123456789">
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-400 mb-1.5 block">Tanga miqdori (kamaytirish uchun -60)</label>
+                            <input type="number" id="adj-amount" placeholder="Masalan: 60 yoki -60">
+                        </div>
+                        <button onclick="adjustBalance()" class="btn-primary w-full">Saqlash</button>
+                    </div>
+                </div>
+
+                <div class="glass rounded-xl p-6 lg:col-span-2 overflow-hidden">
+                    <h3 class="text-sm font-bold text-white mb-4">Oxirgi qo'shilgan foydalanuvchilar</h3>
+                    <div class="overflow-x-auto">
+                        <table>
+                            <thead><tr><th>ID</th><th>Ism</th><th>Username</th><th>Balans</th><th>Videolar</th></tr></thead>
+                            <tbody id="tbody-recent-users"><tr><td colspan="5" class="text-center text-gray-500 py-6">Yuklanmoqda...</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+                <div class="glass rounded-xl p-6 overflow-hidden">
+                    <h3 class="text-sm font-bold text-white mb-4">Oxirgi to'lovlar</h3>
+                    <div class="overflow-x-auto">
+                        <table>
+                            <thead><tr><th>User ID</th><th>Summa</th><th>Tizim</th><th>Status</th><th>Sana</th></tr></thead>
+                            <tbody id="tbody-recent-payments"><tr><td colspan="5" class="text-center text-gray-500 py-6">Yuklanmoqda...</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="glass rounded-xl p-6 overflow-hidden">
+                    <h3 class="text-sm font-bold text-white mb-4">Oxirgi video buyurtmalar</h3>
+                    <div class="overflow-x-auto">
+                        <table>
+                            <thead><tr><th>User ID</th><th>Prompt</th><th>Status</th><th>Sana</th></tr></thead>
+                            <tbody id="tbody-recent-gens"><tr><td colspan="4" class="text-center text-gray-500 py-6">Yuklanmoqda...</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- USERS TAB -->
+        <div id="tab-users" class="tab-content">
+            <div class="glass rounded-xl p-4 mb-4 flex gap-3 flex-wrap items-center">
+                <input type="text" id="users-search" placeholder="Ism, username yoki ID bo'yicha qidirish..." oninput="filterUsers()" class="max-w-xs">
+                <button onclick="loadUsers()" class="btn-primary">Yuklash</button>
+            </div>
+            <div class="glass rounded-xl overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table>
+                        <thead><tr><th>ID</th><th>Ism familiya</th><th>Username</th><th>Balans</th><th>Premium</th><th>Videolar</th><th>Qo'shilgan</th><th>Amal</th></tr></thead>
+                        <tbody id="tbody-users"><tr><td colspan="8" class="text-center text-gray-500 py-10">"Yuklash" tugmasini bosing.</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TRANSACTIONS TAB -->
+        <div id="tab-transactions" class="tab-content">
+            <div class="glass rounded-xl p-4 mb-4 flex gap-3 flex-wrap items-center">
+                <select id="tx-filter" onchange="filterTransactions()" class="max-w-xs w-44">
+                    <option value="">Barchasi</option>
+                    <option value="confirmed">Tasdiqlangan</option>
+                    <option value="pending">Kutmoqda</option>
+                    <option value="cancelled">Bekor</option>
+                </select>
+                <button onclick="loadTransactions()" class="btn-primary">Yuklash</button>
+            </div>
+            <div class="glass rounded-xl overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table>
+                        <thead><tr><th>ID</th><th>User ID</th><th>Summa</th><th>Paket</th><th>Tizim</th><th>Holat</th><th>Sana</th></tr></thead>
+                        <tbody id="tbody-transactions"><tr><td colspan="7" class="text-center text-gray-500 py-10">"Yuklash" tugmasini bosing.</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIDEOS TAB -->
+        <div id="tab-videos" class="tab-content">
+            <div class="glass rounded-xl p-4 mb-4 flex gap-3 flex-wrap items-center">
+                <select id="videos-filter" onchange="filterVideos()" class="max-w-xs w-44">
+                    <option value="">Barchasi</option>
+                    <option value="done">Tayyor</option>
+                    <option value="processing">Jarayonda</option>
+                    <option value="pending">Kutmoqda</option>
+                    <option value="failed">Xato</option>
+                </select>
+                <label class="flex items-center gap-2 text-gray-400 text-xs cursor-pointer select-none">
+                    <input type="checkbox" id="videos-grid-mode" onchange="toggleVideoView()" style="width:auto;padding:0;border-radius:4px"> Grid ko'rinish
+                </label>
+                <button onclick="loadVideos()" class="btn-primary">Yuklash</button>
+            </div>
+            <div id="videos-table-view" class="glass rounded-xl overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table>
+                        <thead><tr><th>ID</th><th>User ID</th><th>Prompt</th><th>Provayder</th><th>Video</th><th>Holat</th><th>Sana</th></tr></thead>
+                        <tbody id="tbody-videos"><tr><td colspan="7" class="text-center text-gray-500 py-10">"Yuklash" tugmasini bosing.</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+            <div id="videos-grid-view" class="hidden">
+                <div id="videos-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"></div>
+            </div>
+        </div>
+
+        <!-- PENDING PAYMENTS TAB -->
+        <div id="tab-pending-payments" class="tab-content">
+            <div class="glass rounded-xl p-4 mb-4 flex gap-3 items-center">
+                <span class="text-sm text-gray-400">Faqat <span class="text-amber-400 font-semibold">pending</span> — qo'lda tasdiqlash kerak bo'lgan to'lovlar</span>
+                <button onclick="loadPendingPayments()" class="btn-primary ml-auto">Yangilash</button>
+            </div>
+            <div class="glass rounded-xl overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table>
+                        <thead><tr><th>ID</th><th>User ID</th><th>Summa</th><th>Paket</th><th>Tizim</th><th>Sana</th><th>Amal</th></tr></thead>
+                        <tbody id="tbody-pending"><tr><td colspan="7" class="text-center text-gray-500 py-10">Yuklanmoqda...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TOP USERS TAB -->
+        <div id="tab-top-users" class="tab-content">
+            <div class="glass rounded-xl p-4 mb-4">
+                <button onclick="loadTopUsers()" class="btn-primary">Yuklash</button>
+            </div>
+            <div class="glass rounded-xl overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table>
+                        <thead><tr><th>O'rin</th><th>ID</th><th>Ism</th><th>Username</th><th>Balans</th><th>Jami xarajat</th><th>Videolar</th></tr></thead>
+                        <tbody id="tbody-top-users"><tr><td colspan="7" class="text-center text-gray-500 py-10">"Yuklash" tugmasini bosing.</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- BROADCAST TAB -->
+        <div id="tab-broadcast" class="tab-content">
+            <div class="max-w-2xl mx-auto">
+                <div class="glass rounded-2xl p-8">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="w-12 h-12 bg-indigo-500/15 rounded-xl flex items-center justify-center shrink-0">
+                            <svg class="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white">Xabar Tarqatish</h3>
+                            <p class="text-gray-400 text-xs mt-0.5">Barcha bot foydalanuvchilariga xabar yuborish. HTML teglaridan foydalanish mumkin.</p>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="text-xs text-gray-400 mb-2 block">Xabar matni</label>
+                        <textarea id="broadcast-text" rows="7" placeholder="Xabar matnini kiriting...&#10;&#10;Masalan:&#10;🎉 &lt;b&gt;Yangi aksiya!&lt;/b&gt;&#10;&#10;Bugun foydalaning 👇" class="font-mono text-xs" style="border-radius:12px;"></textarea>
+                        <p class="text-xs text-gray-600 mt-1.5">Qo'llab-quvvatlanadigan teglar: &lt;b&gt;, &lt;i&gt;, &lt;u&gt;, &lt;code&gt;, &lt;a href="..."&gt;</p>
+                    </div>
+                    <div class="mb-6 glass rounded-xl p-4">
+                        <p class="text-xs text-gray-500 uppercase tracking-wider mb-2 font-semibold">Ko'rinish (Preview)</p>
+                        <div id="broadcast-preview" class="text-sm text-gray-300 min-h-[40px] whitespace-pre-wrap leading-relaxed"><span class="text-gray-600">Matn kiritilmagan...</span></div>
+                    </div>
+                    <button id="btn-broadcast" onclick="confirmBroadcast()" class="btn-primary w-full py-3 flex items-center justify-center gap-2 text-base">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                        Barchaga Jo'natish
+                    </button>
+                    <div id="broadcast-result" class="mt-4 text-center text-sm font-medium hidden"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- REPORTS TAB -->
+        <div id="tab-reports" class="tab-content">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl">
+                <div id="report-daily-link" class="glass rounded-xl p-6 flex items-center gap-4 hover:border-indigo-500/40 transition-all group cursor-pointer">
+                    <div class="w-12 h-12 bg-violet-500/15 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-violet-500/25 transition-all">
+                        <svg class="w-6 h-6 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    </div>
+                    <div>
+                        <p class="font-bold text-white">Kunlik Hisobot</p>
+                        <p class="text-gray-400 text-xs mt-1">Oxirgi 30 kun — CSV format</p>
+                    </div>
+                </div>
+                <div id="report-monthly-link" class="glass rounded-xl p-6 flex items-center gap-4 hover:border-blue-500/40 transition-all group cursor-pointer">
+                    <div class="w-12 h-12 bg-blue-500/15 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-blue-500/25 transition-all">
+                        <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    </div>
+                    <div>
+                        <p class="font-bold text-white">Oylik Hisobot</p>
+                        <p class="text-gray-400 text-xs mt-1">Oxirgi 12 oy — CSV format</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<script>
+    let API_BASE = '';
+    let AUTH_HEADER = '';
+    let allUsers = [], allTransactions = [], allVideos = [];
+    let currentTab = 'dashboard';
+
+    const tabMeta = {
+        'dashboard':        { title: 'Dashboard',                sub: "Tizimning umumiy holati va tezkor ma'lumotlar" },
+        'users':            { title: 'Foydalanuvchilar',         sub: "Botning barcha a'zolari ro'yxati" },
+        'transactions':     { title: 'Tranzaksiyalar',           sub: "Stars va qo'lda to'lovlar tarixi" },
+        'videos':           { title: 'Videolar Galereyasi',      sub: "Yaratilgan barcha AI videolar kuzatuvi" },
+        'pending-payments': { title: "Kutilayotgan To'lovlar",   sub: "Qo'lda tasdiqlash kerak bo'lgan to'lovlar" },
+        'top-users':        { title: 'VIP Foydalanuvchilar',     sub: "Eng faol va ko'p xarajat qilgan foydalanuvchilar" },
+        'broadcast':        { title: 'Xabar Tarqatish',          sub: "Tizimdagi barcha foydalanuvchilarga xabar jo'natish" },
+        'reports':          { title: 'Hisobotlar',               sub: "CSV formatdagi kunlik va oylik hisobotlar" },
+    };
+
+    async function doLogin() {
+        const url = document.getElementById('login-url').value.trim().replace(/\/$/, '');
+        const user = document.getElementById('login-user').value.trim();
+        const pass = document.getElementById('login-pass').value;
+        const err = document.getElementById('login-err');
+        if (!url || !user || !pass) { err.textContent = "Barcha maydonlarni to'ldiring!"; err.classList.remove('hidden'); return; }
+        const auth = 'Basic ' + btoa(user + ':' + pass);
+        try {
+            const res = await fetch(url + '/api/stats', { headers: { 'Authorization': auth } });
+            if (res.status === 401) { err.textContent = "Noto'g'ri username yoki parol!"; err.classList.remove('hidden'); return; }
+            if (!res.ok) { err.textContent = "Server xatosi: " + res.status; err.classList.remove('hidden'); return; }
+            API_BASE = url;
+            AUTH_HEADER = auth;
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('sidebar-url').textContent = url.replace('https://', '');
+            document.getElementById('report-daily-link').onclick = () => window.open(url + '/admin/reports/daily', '_blank');
+            document.getElementById('report-monthly-link').onclick = () => window.open(url + '/admin/reports/monthly', '_blank');
+            loadDashboard();
+        } catch(e) {
+            err.textContent = "Server bilan ulanib bo'lmadi. URL to'g'riligini tekshiring.";
+            err.classList.remove('hidden');
         }
+    }
 
-        async function fetchAPI(endpoint, options = {}) {
-            try {
-                // To send Basic Auth credentials if needed
-                options.credentials = 'include';
-                
-                const res = await fetch(API_BASE + endpoint, options);
-                if(res.status === 401) {
-                    alert("Avtorizatsiya muvaffaqiyatsiz (401). Bot/Railway admin parolingizni kiriting.");
-                    // Prompt for Basic Auth manually if proxy fails to prompt
-                    const user = prompt("Admin username:");
-                    const pass = prompt("Admin password:");
-                    if(user && pass) {
-                        options.headers = {
-                            ...options.headers,
-                            'Authorization': 'Basic ' + btoa(user + ':' + pass)
-                        };
-                        return await fetchAPI(endpoint, options);
-                    }
-                    return null;
-                }
-                
-                if(!res.ok) {
-                    const text = await res.text();
-                    document.getElementById('page-subtitle').innerHTML = `<span class="text-red-500 font-bold">API Xatosi (${res.status}): ${endpoint} -> ${text.substring(0, 50)}</span>`;
-                    return null;
-                }
-                
-                const data = await res.json();
-                return data;
-            } catch(e) {
-                document.getElementById('page-subtitle').innerHTML = `<span class="text-red-500 font-bold">Tarmoq xatosi: ${endpoint} -> ${e.message}</span>`;
-                console.error("API xatosi:", e);
+    function doLogout() {
+        if (confirm("Tizimdan chiqishni xohlaysizmi?")) {
+            API_BASE = ''; AUTH_HEADER = '';
+            document.getElementById('login-screen').style.display = 'flex';
+            document.getElementById('login-pass').value = '';
+        }
+    }
+
+    function switchTab(tabId, btn) {
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        if (btn) btn.classList.add('active');
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.getElementById('tab-' + tabId).classList.add('active');
+        document.getElementById('page-title').innerText = tabMeta[tabId].title;
+        document.getElementById('page-subtitle').innerText = tabMeta[tabId].sub;
+        currentTab = tabId;
+        if (tabId === 'dashboard') loadDashboard();
+        if (tabId === 'pending-payments') loadPendingPayments();
+    }
+
+    function refreshCurrent() {
+        const icon = document.getElementById('refresh-icon');
+        icon.style.transform = 'rotate(360deg)';
+        icon.style.transition = 'transform 0.5s';
+        setTimeout(() => { icon.style.transform = ''; icon.style.transition = ''; }, 500);
+        if (currentTab === 'dashboard') loadDashboard();
+        else if (currentTab === 'users') loadUsers();
+        else if (currentTab === 'transactions') loadTransactions();
+        else if (currentTab === 'videos') loadVideos();
+        else if (currentTab === 'pending-payments') loadPendingPayments();
+        else if (currentTab === 'top-users') loadTopUsers();
+    }
+
+    async function api(endpoint, options = {}) {
+        if (!API_BASE) return null;
+        options.headers = { ...options.headers, 'Authorization': AUTH_HEADER };
+        try {
+            const res = await fetch(API_BASE + endpoint, options);
+            if (!res.ok) {
+                const txt = await res.text().catch(() => '');
+                showToast(`Xato ${res.status}: ${txt.substring(0, 80)}`, 'red');
                 return null;
             }
+            return await res.json();
+        } catch (e) {
+            showToast('Tarmoq xatosi: ' + e.message, 'red');
+            return null;
         }
+    }
 
-        async function loadDashboard() {
-            const data = await fetchAPI('/api/stats');
-            if(!data) return;
-            
-            document.getElementById('stat-users').innerText = data.total_users + ' ta';
-            document.getElementById('stat-new-users').innerText = '+' + data.new_users_today + ' ta';
-            document.getElementById('stat-videos').innerText = data.today_videos + ' ta';
-            document.getElementById('stat-revenue').innerText = data.total_revenue.toLocaleString() + " so'm";
+    async function loadDashboard() {
+        const data = await api('/api/dashboard');
+        if (!data) return;
+        const s = data.stats;
+        document.getElementById('stat-users').innerText = (s.total_users || 0).toLocaleString() + ' ta';
+        document.getElementById('stat-new-users').innerText = s.new_users_today || 0;
+        document.getElementById('stat-total-videos').innerText = (s.total_videos || 0).toLocaleString() + ' ta';
+        document.getElementById('stat-today-videos').innerText = s.today_videos || 0;
+        document.getElementById('stat-today-rev').innerText = (s.today_revenue || 0).toLocaleString();
+        document.getElementById('stat-total-rev').innerText = (s.total_revenue || 0).toLocaleString();
+
+        document.getElementById('tbody-recent-users').innerHTML = (data.recent_users || []).map(u => `
+            <tr>
+                <td class="font-mono text-xs text-indigo-400">${u.id}</td>
+                <td class="font-medium text-white">${esc(u.full_name || "Noma'lum")}</td>
+                <td class="text-gray-400 text-xs">${u.username ? '@' + esc(u.username) : '—'}</td>
+                <td><span class="badge badge-amber">${u.tangas} 🪙</span></td>
+                <td class="text-gray-300">${u.total_videos} ta</td>
+            </tr>
+        `).join('') || '<tr><td colspan="5" class="text-center text-gray-500 py-4">Ma\'lumot yo\'q</td></tr>';
+
+        document.getElementById('tbody-recent-payments').innerHTML = (data.recent_payments || []).map(p => `
+            <tr>
+                <td class="font-mono text-xs text-indigo-400">${p.user_id}</td>
+                <td class="font-semibold text-white">${p.amount_tangas} 🪙</td>
+                <td><span class="badge badge-blue">${esc(p.provider || '—')}</span></td>
+                <td>${statusBadge(p.status)}</td>
+                <td class="text-gray-400 text-xs">${p.created_at || '—'}</td>
+            </tr>
+        `).join('') || '<tr><td colspan="5" class="text-center text-gray-500 py-4">Ma\'lumot yo\'q</td></tr>';
+
+        document.getElementById('tbody-recent-gens').innerHTML = (data.recent_gens || []).map(g => `
+            <tr>
+                <td class="font-mono text-xs text-indigo-400">${g.user_id}</td>
+                <td class="max-w-xs truncate text-gray-300 text-xs" title="${esc(g.prompt || '')}">${esc((g.prompt || '').substring(0,50))}${(g.prompt||'').length>50?'…':''}</td>
+                <td>${statusBadge(g.status)}</td>
+                <td class="text-gray-400 text-xs">${g.created_at || '—'}</td>
+            </tr>
+        `).join('') || '<tr><td colspan="4" class="text-center text-gray-500 py-4">Ma\'lumot yo\'q</td></tr>';
+    }
+
+    async function loadUsers() {
+        document.getElementById('tbody-users').innerHTML = '<tr><td colspan="8" class="text-center text-gray-500 py-10">Yuklanmoqda...</td></tr>';
+        const data = await api('/api/users?limit=200');
+        if (!data) return;
+        allUsers = data;
+        renderUsers(data);
+    }
+
+    function renderUsers(data) {
+        document.getElementById('tbody-users').innerHTML = data.map(u => `
+            <tr>
+                <td class="font-mono text-xs text-indigo-400">${u.id}</td>
+                <td class="font-medium text-white">${esc(u.full_name || "Noma'lum")}</td>
+                <td class="text-gray-400 text-xs">${u.username ? '@' + esc(u.username) : '—'}</td>
+                <td><span class="badge badge-amber">${u.tangas} 🪙</span></td>
+                <td>${u.is_premium ? '<span class="badge badge-blue">Premium</span>' : '<span class="badge badge-gray">Free</span>'}</td>
+                <td class="text-gray-300">${u.total_videos}</td>
+                <td class="text-gray-400 text-xs">${u.created_at || '—'}</td>
+                <td><button onclick="quickBalance(${u.id})" class="btn-green">+Tanga</button></td>
+            </tr>
+        `).join('') || '<tr><td colspan="8" class="text-center text-gray-500 py-6">Ma\'lumot yo\'q</td></tr>';
+    }
+
+    function filterUsers() {
+        const q = document.getElementById('users-search').value.toLowerCase();
+        renderUsers(allUsers.filter(u => (u.full_name||'').toLowerCase().includes(q) || (u.username||'').toLowerCase().includes(q) || String(u.id).includes(q)));
+    }
+
+    async function loadTransactions() {
+        document.getElementById('tbody-transactions').innerHTML = '<tr><td colspan="7" class="text-center text-gray-500 py-10">Yuklanmoqda...</td></tr>';
+        const data = await api('/api/transactions?limit=200');
+        if (!data) return;
+        allTransactions = data;
+        renderTransactions(data);
+    }
+
+    function renderTransactions(data) {
+        document.getElementById('tbody-transactions').innerHTML = data.map(t => `
+            <tr>
+                <td class="font-mono text-xs">${t.id}</td>
+                <td class="font-mono text-xs text-indigo-400">${t.user_id}</td>
+                <td class="font-bold text-white">${t.amount_tangas} 🪙</td>
+                <td class="text-gray-400 text-xs">${t.package || '—'}</td>
+                <td><span class="badge badge-blue">${esc(t.provider || '—')}</span></td>
+                <td>${statusBadge(t.status)}</td>
+                <td class="text-gray-400 text-xs">${t.created_at || '—'}</td>
+            </tr>
+        `).join('') || '<tr><td colspan="7" class="text-center text-gray-500 py-6">Ma\'lumot yo\'q</td></tr>';
+    }
+
+    function filterTransactions() {
+        const f = document.getElementById('tx-filter').value;
+        renderTransactions(f ? allTransactions.filter(t => t.status === f) : allTransactions);
+    }
+
+    async function loadVideos() {
+        document.getElementById('tbody-videos').innerHTML = '<tr><td colspan="7" class="text-center text-gray-500 py-10">Yuklanmoqda...</td></tr>';
+        const data = await api('/api/videos?limit=200');
+        if (!data) return;
+        allVideos = data;
+        renderVideos(data);
+    }
+
+    function renderVideos(data) {
+        document.getElementById('tbody-videos').innerHTML = data.map(v => `
+            <tr>
+                <td class="font-mono text-xs">${v.id}</td>
+                <td class="font-mono text-xs text-indigo-400">${v.user_id}</td>
+                <td class="max-w-xs truncate text-gray-300 text-xs" title="${esc(v.prompt||'')}">${esc((v.prompt||'').substring(0,55))}${(v.prompt||'').length>55?'…':''}</td>
+                <td><span class="badge badge-blue">${esc(v.api_provider||'—')}</span></td>
+                <td>${v.video_url ? `<a href="${esc(v.video_url)}" target="_blank" class="text-indigo-400 hover:text-indigo-300 text-xs underline underline-offset-2">Ko'rish ↗</a>` : '<span class="text-gray-600 text-xs">—</span>'}</td>
+                <td>${statusBadge(v.status)}</td>
+                <td class="text-gray-400 text-xs">${v.created_at||'—'}</td>
+            </tr>
+        `).join('') || '<tr><td colspan="7" class="text-center text-gray-500 py-6">Ma\'lumot yo\'q</td></tr>';
+
+        document.getElementById('videos-grid').innerHTML = data.filter(v => v.video_url).map(v => `
+            <div class="video-card">
+                <div class="bg-gray-900/60 aspect-video flex items-center justify-center relative">
+                    <a href="${esc(v.video_url)}" target="_blank" class="absolute inset-0 flex items-center justify-center group">
+                        <div class="w-12 h-12 bg-indigo-500/80 rounded-full flex items-center justify-center group-hover:bg-indigo-500 transition-all">
+                            <svg class="w-5 h-5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                        </div>
+                    </a>
+                </div>
+                <div class="p-3">
+                    <p class="text-xs text-gray-300 truncate" title="${esc(v.prompt||'')}">${esc((v.prompt||'').substring(0,50))}</p>
+                    <div class="flex items-center justify-between mt-2">
+                        <span class="font-mono text-xs text-indigo-400">${v.user_id}</span>
+                        ${statusBadge(v.status)}
+                    </div>
+                    <p class="text-gray-600 text-xs mt-1">${v.created_at||''}</p>
+                </div>
+            </div>
+        `).join('') || '<div class="col-span-4 text-center text-gray-500 py-10">Video URL mavjud emas</div>';
+    }
+
+    function filterVideos() {
+        const f = document.getElementById('videos-filter').value;
+        renderVideos(f ? allVideos.filter(v => v.status === f) : allVideos);
+    }
+
+    function toggleVideoView() {
+        const checked = document.getElementById('videos-grid-mode').checked;
+        document.getElementById('videos-table-view').classList.toggle('hidden', checked);
+        document.getElementById('videos-grid-view').classList.toggle('hidden', !checked);
+    }
+
+    async function loadPendingPayments() {
+        document.getElementById('tbody-pending').innerHTML = '<tr><td colspan="7" class="text-center text-gray-500 py-10">Yuklanmoqda...</td></tr>';
+        const data = await api('/api/transactions?limit=500');
+        if (!data) return;
+        const pending = data.filter(t => t.status === 'pending');
+        const badge = document.getElementById('pending-badge');
+        if (pending.length > 0) { badge.textContent = pending.length; badge.classList.remove('hidden'); }
+        else badge.classList.add('hidden');
+        document.getElementById('tbody-pending').innerHTML = pending.length ? pending.map(t => `
+            <tr>
+                <td class="font-mono text-xs">${t.id}</td>
+                <td class="font-mono text-xs text-indigo-400">${t.user_id}</td>
+                <td class="font-bold text-white">${t.amount_tangas} 🪙</td>
+                <td class="text-gray-400 text-xs">${t.package||'—'}</td>
+                <td><span class="badge badge-blue">${esc(t.provider||'—')}</span></td>
+                <td class="text-gray-400 text-xs">${t.created_at||'—'}</td>
+                <td class="flex gap-2">
+                    <button onclick="confirmPayment(${t.id})" class="btn-green">✓ Tasdiq</button>
+                    <button onclick="rejectPayment(${t.id})" class="btn-red">✗ Rad</button>
+                </td>
+            </tr>
+        `).join('') : '<tr><td colspan="7" class="text-center text-gray-500 py-10">Kutilayotgan to\'lovlar yo\'q 🎉</td></tr>';
+    }
+
+    async function loadTopUsers() {
+        document.getElementById('tbody-top-users').innerHTML = '<tr><td colspan="7" class="text-center text-gray-500 py-10">Yuklanmoqda...</td></tr>';
+        const data = await api('/api/top-users?limit=20');
+        if (!data) return;
+        document.getElementById('tbody-top-users').innerHTML = data.map((u, i) => `
+            <tr>
+                <td class="font-bold text-white">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1)}</td>
+                <td class="font-mono text-xs text-indigo-400">${u.id}</td>
+                <td class="font-medium text-white">${esc(u.full_name||"Noma'lum")}</td>
+                <td class="text-gray-400 text-xs">${u.username?'@'+esc(u.username):'—'}</td>
+                <td><span class="badge badge-amber">${u.tangas} 🪙</span></td>
+                <td class="font-semibold text-emerald-400">${(u.total_spent||0).toLocaleString()} 🪙</td>
+                <td class="text-gray-300">${u.total_videos}</td>
+            </tr>
+        `).join('') || '<tr><td colspan="7" class="text-center text-gray-500 py-6">Ma\'lumot yo\'q</td></tr>';
+    }
+
+    async function adjustBalance() {
+        const uid = document.getElementById('adj-uid').value;
+        const amount = document.getElementById('adj-amount').value;
+        if (!uid || !amount) return showToast('ID va miqdor kiritilishi shart!', 'red');
+        const data = await api('/api/adjust-balance', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({user_id: parseInt(uid), amount: parseInt(amount)})
+        });
+        if (data) {
+            showToast(`✅ Balans yangilandi! Yangi: ${data.new_balance} tanga`, 'green');
+            document.getElementById('adj-uid').value = '';
+            document.getElementById('adj-amount').value = '';
         }
+    }
 
-        async function loadUsers() {
-            const data = await fetchAPI('/api/users?limit=100');
-            if(!data) return;
-            const tbody = document.getElementById('tbody-users');
-            tbody.innerHTML = data.map(u => `
-                <tr>
-                    <td class="font-mono text-xs text-indigo-400">${u.id}</td>
-                    <td class="font-medium text-white">${u.full_name || 'Noma\'lum'}</td>
-                    <td class="text-gray-400">${u.username ? '@'+u.username : '-'}</td>
-                    <td><span class="bg-amber-500/10 text-amber-500 px-2.5 py-1 rounded-md font-medium text-xs">${u.tangas} 🪙</span></td>
-                    <td>${u.total_videos} ta</td>
-                    <td class="text-gray-400 text-xs">${u.created_at || '-'}</td>
-                </tr>
-            `).join('');
-        }
+    function quickBalance(userId) {
+        switchTab('dashboard', document.querySelector('.nav-item'));
+        setTimeout(() => {
+            document.getElementById('adj-uid').value = userId;
+            document.getElementById('adj-uid').focus();
+            showToast('ID to\'ldirildi. Miqdorni kiriting.', 'blue');
+        }, 100);
+    }
 
-        async function loadTransactions() {
-            const data = await fetchAPI('/api/transactions?limit=100');
-            if(!data) return;
-            const tbody = document.getElementById('tbody-transactions');
-            tbody.innerHTML = data.map(t => `
-                <tr>
-                    <td class="font-mono text-xs">${t.id}</td>
-                    <td class="font-mono text-xs text-indigo-400">${t.user_id}</td>
-                    <td class="font-bold text-white">${t.amount_tangas} 🪙</td>
-                    <td class="text-gray-400">${t.package || '-'}</td>
-                    <td><span class="bg-blue-500/10 text-blue-400 px-2 py-1 rounded text-xs uppercase tracking-wider">${t.provider}</span></td>
-                    <td>${
-                        t.status === 'confirmed' ? '<span class="text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded text-xs">Tasdiqlangan</span>' :
-                        t.status === 'pending' ? '<span class="text-amber-500 bg-amber-500/10 px-2 py-1 rounded text-xs">Kutmoqda</span>' :
-                        '<span class="text-red-500 bg-red-500/10 px-2 py-1 rounded text-xs">Bekor qilingan</span>'
-                    }</td>
-                    <td class="text-gray-400 text-xs">${t.created_at || '-'}</td>
-                </tr>
-            `).join('');
-        }
-
-        async function loadVideos() {
-            const data = await fetchAPI('/api/videos?limit=100');
-            if(!data) return;
-            const tbody = document.getElementById('tbody-videos');
-            tbody.innerHTML = data.map(v => `
-                <tr>
-                    <td class="font-mono text-xs">${v.id}</td>
-                    <td class="font-mono text-xs text-indigo-400">${v.user_id}</td>
-                    <td class="max-w-xs truncate text-gray-300" title="${v.prompt}">${v.prompt || 'Rasm orqali yaratilgan'}</td>
-                    <td>${v.video_url ? `<a href="${v.video_url}" target="_blank" class="text-indigo-400 hover:text-indigo-300 underline">Ko'rish</a>` : '<span class="text-gray-500">-</span>'}</td>
-                    <td>${
-                        v.status === 'done' ? '<span class="text-emerald-500">Muvaffaqiyatli</span>' :
-                        v.status === 'failed' ? '<span class="text-red-500">Xato</span>' :
-                        '<span class="text-amber-500 animate-pulse">Jarayonda</span>'
-                    }</td>
-                    <td class="text-gray-400 text-xs">${v.created_at || '-'}</td>
-                </tr>
-            `).join('');
-        }
-
-        async function loadTopUsers() {
-            const data = await fetchAPI('/api/top-users?limit=10');
-            if(!data) return;
-            const tbody = document.getElementById('tbody-top-users');
-            tbody.innerHTML = data.map((u, i) => `
-                <tr>
-                    <td>
-                        <span class="flex items-center justify-center w-8 h-8 rounded-full ${i === 0 ? 'bg-amber-500/20 text-amber-500' : i === 1 ? 'bg-gray-300/20 text-gray-300' : i === 2 ? 'bg-orange-700/20 text-orange-400' : 'bg-gray-800 text-gray-400'} font-bold">
-                            ${i+1}
-                        </span>
-                    </td>
-                    <td class="font-mono text-xs text-indigo-400">${u.id}</td>
-                    <td class="font-medium text-white">${u.full_name || 'Noma\'lum'}</td>
-                    <td><span class="bg-indigo-500/10 text-indigo-400 px-2.5 py-1 rounded-md font-medium text-xs">${u.tangas} 🪙</span></td>
-                    <td class="font-bold text-emerald-400">${(u.total_spent || 0).toLocaleString()} so'm</td>
-                    <td>${u.total_videos} ta</td>
-                </tr>
-            `).join('');
-        }
-
-        async function adjustBalance(e) {
-            e.preventDefault();
-            const uid = document.getElementById('adj-uid').value;
-            const amount = document.getElementById('adj-amount').value;
-            
-            const formData = new FormData();
-            formData.append('user_id', uid);
-            formData.append('amount', amount);
-            
-            try {
-                const data = await fetchAPI('/api/adjust-balance', {
-                    method: 'POST',
-                    body: formData
-                });
-                if(!data) return;
-                
-                if(data.status === 'success') {
-                    alert("Muvaffaqiyatli! Yangi balans: " + data.new_balance);
-                    document.getElementById('adj-uid').value = '';
-                    document.getElementById('adj-amount').value = '';
-                } else {
-                    alert("Xato: " + (data.detail || "Noma'lum xato"));
-                }
-            } catch(e) {
-                alert("Tarmoq xatosi!");
+    function confirmPayment(paymentId) {
+        showModal("To'lovni tasdiqlash", `To'lov #${paymentId} ni tasdiqlaysizmi? Foydalanuvchi hisobiga tanga qo'shiladi.`,
+            async () => {
+                const data = await api(`/api/payments/${paymentId}/confirm`, {method: 'POST'});
+                if (data) { showToast("✅ To'lov tasdiqlandi!", 'green'); loadPendingPayments(); }
             }
-        }
+        );
+    }
 
-        async function sendBroadcast(e) {
-            e.preventDefault();
-            const btn = document.getElementById('btn-broadcast');
-            const statusText = document.getElementById('broadcast-status');
-            const text = document.getElementById('broadcast-text').value;
-            
-            btn.disabled = true;
-            btn.innerHTML = `<svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Yuborilmoqda...`;
-            
-            try {
-                const data = await fetchAPI('/api/broadcast', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({text: text})
-                });
-                if(!data) throw new Error("API xatosi yuz berdi yoki ruxsat etilmadi.");
-                
-                statusText.classList.remove('hidden', 'text-red-500');
-                if(data.status === 'success') {
-                    statusText.classList.add('text-emerald-500');
-                    statusText.innerText = `✅ Muvaffaqiyatli! ${data.total} ta userdan ${data.sent_count} tasiga xabar bordi.`;
-                    document.getElementById('broadcast-text').value = '';
-                } else {
-                    statusText.classList.add('text-red-500');
-                    statusText.innerText = `❌ Xatolik: ${data.detail}`;
-                }
-            } catch(e) {
-                statusText.classList.remove('hidden');
-                statusText.classList.add('text-red-500');
-                statusText.innerText = `❌ Tarmoq xatosi!`;
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = `<span>Barchaga Tarqatish</span><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>`;
+    function rejectPayment(paymentId) {
+        showModal("To'lovni rad etish", `To'lov #${paymentId} ni rad etasizmi?`,
+            async () => {
+                const data = await api(`/api/payments/${paymentId}/reject`, {method: 'POST'});
+                if (data) { showToast("❌ To'lov rad etildi", 'amber'); loadPendingPayments(); }
             }
+        );
+    }
+
+    function confirmBroadcast() {
+        const text = document.getElementById('broadcast-text').value.trim();
+        if (!text) return showToast('Xabar matni bo\'sh!', 'red');
+        showModal('Broadcast yuborish', 'Ushbu xabar barcha foydalanuvchilarga yuboriladi. Davom etasizmi?', () => sendBroadcast(text));
+    }
+
+    async function sendBroadcast(text) {
+        const btn = document.getElementById('btn-broadcast');
+        const result = document.getElementById('broadcast-result');
+        btn.disabled = true;
+        btn.innerHTML = '<svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg> Yuborilmoqda...';
+        result.classList.remove('hidden');
+        result.className = 'mt-4 text-center text-sm font-medium text-amber-400';
+        result.textContent = 'Xabar yuborilmoqda, iltimos kuting...';
+        const data = await api('/api/broadcast', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({text})
+        });
+        btn.disabled = false;
+        btn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg> Barchaga Jo\'natish';
+        if (data) {
+            result.className = 'mt-4 text-center text-sm font-medium text-emerald-400';
+            result.textContent = `✅ ${data.sent_count} ta foydalanuvchiga xabar yuborildi!`;
+            showToast(`✅ Broadcast: ${data.sent_count}/${data.total}`, 'green');
+            document.getElementById('broadcast-text').value = '';
+            document.getElementById('broadcast-preview').innerHTML = '<span class="text-gray-600">Matn kiritilmagan...</span>';
+        } else {
+            result.className = 'mt-4 text-center text-sm font-medium text-red-400';
+            result.textContent = 'Xabar yuborishda xato yuz berdi.';
         }
+    }
 
-        function logout() {
-            if(confirm("Tizimdan chiqishni xohlaysizmi?")) {
-                window.location.href = '/logout'; // Update based on actual auth implementation
-            }
-        }
+    // Broadcast live preview
+    document.getElementById('broadcast-text').addEventListener('input', function() {
+        const prev = document.getElementById('broadcast-preview');
+        const val = this.value.trim();
+        prev.innerHTML = val ? val.replace(/\n/g, '<br>') : '<span class="text-gray-600">Matn kiritilmagan...</span>';
+    });
 
-        // Initialize first load
-        loadDashboard();
+    // Helpers
+    function statusBadge(s) {
+        if (!s) return '<span class="badge badge-gray">—</span>';
+        const map = { confirmed:'badge-green', done:'badge-green', pending:'badge-amber', processing:'badge-blue', cancelled:'badge-red', failed:'badge-red' };
+        const labels = { confirmed:'Tasdiqlangan', done:'Tayyor', pending:'Kutmoqda', processing:'Jarayonda', cancelled:'Bekor', failed:'Xato' };
+        return `<span class="badge ${map[s]||'badge-gray'}">${labels[s]||s}</span>`;
+    }
 
-    </script>
+    function esc(s) {
+        return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function showToast(msg, color='green') {
+        const t = document.getElementById('toast');
+        const colors = {green:'bg-emerald-500 text-white', red:'bg-red-500 text-white', amber:'bg-amber-500 text-black', blue:'bg-indigo-500 text-white'};
+        t.className = `${colors[color]||colors.green} px-5 py-3 rounded-xl shadow-2xl`;
+        t.textContent = msg;
+        t.classList.remove('hidden');
+        clearTimeout(t._timer);
+        t._timer = setTimeout(() => t.classList.add('hidden'), 3500);
+    }
+
+    let modalCallback = null;
+    function showModal(title, body, onConfirm) {
+        document.getElementById('modal-title').textContent = title;
+        document.getElementById('modal-body').textContent = body;
+        modalCallback = onConfirm;
+        document.getElementById('modal-overlay').classList.remove('hidden');
+        document.getElementById('modal-confirm-btn').onclick = () => { closeModal(); if(modalCallback) modalCallback(); };
+    }
+    function closeModal() { document.getElementById('modal-overlay').classList.add('hidden'); modalCallback = null; }
+    document.getElementById('modal-overlay').addEventListener('click', e => { if (e.target === document.getElementById('modal-overlay')) closeModal(); });
+
+    // Enter on login
+    document.getElementById('login-pass').addEventListener('keydown', e => { if(e.key === 'Enter') doLogin(); });
+</script>
 </body>
 </html>
