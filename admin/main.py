@@ -462,6 +462,7 @@ async def api_users(
             "username": u.username,
             "tangas": u.tangas,
             "total_videos": u.total_videos,
+            "is_premium": u.is_premium,
             "created_at": u.created_at.strftime('%Y-%m-%d %H:%M') if u.created_at else None
         } for u in users]
 
@@ -503,7 +504,7 @@ async def api_videos(
             "prompt": v.prompt,
             "video_url": v.video_url,
             "status": v.status,
-            "api_provider": v.api_provider,
+            "api_provider": v.api_job_id,
             "created_at": v.created_at.strftime('%Y-%m-%d %H:%M') if v.created_at else None
         } for v in videos]
 
@@ -526,6 +527,69 @@ async def api_top_users(
             "total_spent": u.total_spent,
             "total_videos": u.total_videos
         } for u in users]
+
+
+@app.post("/api/payments/{payment_id}/confirm")
+async def api_confirm_payment(
+    payment_id: int,
+    username: str = Depends(check_admin_credentials)
+):
+    from bot.database.queries import confirm_manual_payment, get_user
+    async with AsyncSessionLocal() as session:
+        payment = await session.get(Payment, payment_id)
+        if not payment:
+            raise HTTPException(status_code=404, detail="To'lov topilmadi")
+        if payment.status == "confirmed":
+            raise HTTPException(status_code=400, detail="Bu to'lov allaqachon tasdiqlangan")
+        payment, referrer_id, bonus_amount = await confirm_manual_payment(session, payment_id)
+        if settings.BOT_TOKEN.strip():
+            try:
+                from aiogram import Bot
+                from aiogram.client.default import DefaultBotProperties
+                from aiogram.enums import ParseMode
+                temp_bot = Bot(token=settings.BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+                await temp_bot.send_message(
+                    chat_id=payment.user_id,
+                    text=f"🎉 <b>To'lovingiz tasdiqlandi!</b>\n\n🪙 <b>+{payment.amount_tangas} tanga</b> hisobingizga qo'shildi. Rahmat! 🙏"
+                )
+                if referrer_id and bonus_amount > 0:
+                    await temp_bot.send_message(
+                        chat_id=referrer_id,
+                        text=f"🎁 <b>Do'stingiz tanga sotib oldi!</b>\n\nSizga <b>+{bonus_amount} 🪙 bonus tanga</b> taqdim etildi!"
+                    )
+                await temp_bot.session.close()
+            except Exception as e:
+                logger.warning(f"Bot notification failed: {e}")
+        return {"status": "success", "payment_id": payment_id}
+
+
+@app.post("/api/payments/{payment_id}/reject")
+async def api_reject_payment(
+    payment_id: int,
+    username: str = Depends(check_admin_credentials)
+):
+    async with AsyncSessionLocal() as session:
+        payment = await session.get(Payment, payment_id)
+        if not payment:
+            raise HTTPException(status_code=404, detail="To'lov topilmadi")
+        if payment.status != "pending":
+            raise HTTPException(status_code=400, detail="Faqat kutilayotgan to'lovni rad etish mumkin")
+        payment.status = "cancelled"
+        await session.commit()
+        if settings.BOT_TOKEN.strip():
+            try:
+                from aiogram import Bot
+                from aiogram.client.default import DefaultBotProperties
+                from aiogram.enums import ParseMode
+                temp_bot = Bot(token=settings.BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+                await temp_bot.send_message(
+                    chat_id=payment.user_id,
+                    text="❌ <b>Afsuski, to'lov chekingiz rad etildi.</b>\n\nIltimos, o'tkazma tafsilotlarini qayta tekshiring yoki adminga murojaat qiling."
+                )
+                await temp_bot.session.close()
+            except Exception as e:
+                logger.warning(f"Bot notification failed: {e}")
+        return {"status": "success", "payment_id": payment_id}
 
 
 @app.post("/api/broadcast")
